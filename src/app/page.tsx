@@ -1,57 +1,121 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileUploader from '@/components/FileUploader';
 import CodeEditor from '@/components/CodeEditor';
 import LivePreview from '@/components/LivePreview';
 import PDFExporter from '@/components/PDFExporter';
+import FileTree from '@/components/FileTree';
+import FileTabs from '@/components/FileTabs';
+import MenuBar from '@/components/MenuBar';
+import { useFileTree } from '@/hooks/useFileTree';
+import { getFileTypeInfo } from '@/types/project';
 
 export default function Home() {
-  const [code, setCode] = useState('');
-  const [filename, setFilename] = useState('component.tsx');
   const previewRef = useRef<HTMLDivElement>(null);
+  const {
+    fileTree,
+    isHydrated,
+    addFile,
+    updateFile,
+    deleteFile,
+    openTab,
+    closeTab,
+    setActiveFile,
+    getFileById,
+    clearProject,
+    loadProject,
+  } = useFileTree();
+
+  const activeFile = fileTree.activeFileId ? getFileById(fileTree.activeFileId) : null;
+  const hasFiles = fileTree.structure.root.length > 0;
 
   const handleFileUpload = (content: string, name: string) => {
-    setCode(content);
-    setFilename(name);
+    addFile(name, content);
+  };
+
+  const handleProjectUpload = (files: Record<string, string>) => {
+    clearProject();
+    loadProject(files);
   };
 
   const handleCodeChange = (newCode: string) => {
-    setCode(newCode);
+    if (activeFile) {
+      updateFile(activeFile.id, newCode);
+    }
+  };
+
+  const handleFileSelect = (fileId: string) => {
+    openTab(fileId);
+  };
+
+  const handleTabSelect = (fileId: string) => {
+    setActiveFile(fileId);
+  };
+
+  const handleTabClose = (fileId: string) => {
+    closeTab(fileId);
+  };
+
+  const handleFileDelete = (fileId: string) => {
+    deleteFile(fileId);
   };
 
   return (
     <div className="h-screen flex bg-[#1e1e1e] text-white">
+      {/* Menu Bar */}
+      <MenuBar />
+      
       {/* Sidebar */}
       <div className="w-64 bg-[#252526] border-r border-[#2d2d30] flex flex-col">
         {/* Header */}
         <div className="h-9 bg-[#2d2d30] flex items-center justify-between px-3 border-b border-[#3e3e42]">
           <span className="text-xs font-medium text-[#cccccc] uppercase tracking-wide">Explorer</span>
-          <img src="/jstcode.png" alt="JstCode" className="h-7 w-auto opacity-80" />
+          <img src="/logoicon_W.png" alt="JstCode" className="h-6 w-auto opacity-90" />
         </div>
         
         {/* File Tree */}
-        <div className="flex-1 p-2">
-          {!code ? (
-            <div className="text-center py-8">
+        <div className="flex-1 overflow-auto">
+          {!isHydrated ? (
+            <div className="text-center py-8 px-2">
+              <div className="text-[#858585] text-xs mb-4">Loading...</div>
+            </div>
+          ) : !hasFiles ? (
+            <div className="text-center py-8 px-2">
               <div className="text-[#858585] text-xs mb-4">No files uploaded</div>
-              <FileUploader onFileUpload={handleFileUpload} />
+              <FileUploader 
+                onFileUpload={handleFileUpload}
+                onProjectUpload={handleProjectUpload}
+                mode="project"
+              />
             </div>
           ) : (
-            <div className="space-y-1">
-              <div className="flex items-center px-2 py-1 hover:bg-[#2a2d2e] rounded text-sm">
-                <span className="text-[#519aba] mr-2">📄</span>
-                <span className="text-[#cccccc]">{filename}</span>
-              </div>
-            </div>
+            <FileTree
+              files={fileTree.structure.root}
+              activeFileId={fileTree.activeFileId}
+              onFileSelect={handleFileSelect}
+              onFileDelete={handleFileDelete}
+            />
           )}
         </div>
         
         {/* Bottom Actions */}
-        {code && (
+        {hasFiles && (
           <div className="border-t border-[#3e3e42] p-2">
-            <PDFExporter previewRef={previewRef} filename={filename} />
+            <div className="flex gap-2">
+              <PDFExporter 
+                previewRef={previewRef} 
+                filename={activeFile?.name || 'preview'} 
+              />
+              <button
+                onClick={clearProject}
+                className="px-3 py-1 text-xs bg-[#3e3e42] hover:bg-[#4e4e52] text-[#cccccc] rounded transition-colors"
+                title="Clear all files"
+              >
+                Clear
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -59,39 +123,50 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Tab Bar */}
-        <div className="h-9 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center">
-          {code && (
-            <div className="bg-[#1e1e1e] px-4 py-2 text-xs text-[#cccccc] border-r border-[#3e3e42]">
-              {filename}
-            </div>
-          )}
-        </div>
+        <FileTabs
+          openTabs={fileTree.openTabs}
+          activeFileId={fileTree.activeFileId}
+          getFileById={getFileById}
+          onTabSelect={handleTabSelect}
+          onTabClose={handleTabClose}
+        />
 
         {/* Editor and Preview */}
-        {code ? (
-          <div className="flex-1">
+        {activeFile ? (
+          <div className="flex-1 relative">
             <PanelGroup direction="horizontal" className="h-full">
               <Panel defaultSize={50} minSize={30}>
                 <CodeEditor
-                  value={code}
+                  value={activeFile.content || ''}
                   onChange={handleCodeChange}
-                  language="typescript"
+                  language={getFileTypeInfo(activeFile.name).language}
+                  activeFile={activeFile}
                 />
               </Panel>
               
-              <PanelResizeHandle className="w-px bg-[#3e3e42] hover:bg-[#007acc] transition-colors" />
+              <PanelResizeHandle className="w-px bg-[#3e3e42] hover:bg-[#4e4e52] transition-colors" />
               
               <Panel defaultSize={50} minSize={30}>
                 <div className="h-full" ref={previewRef}>
-                  <LivePreview code={code} filename={filename} />
+                  <LivePreview 
+                    code={activeFile.content || ''} 
+                    filename={activeFile.name}
+                    allFiles={Object.values(fileTree.structure.files)
+                      .filter(file => file.type === 'file')
+                      .reduce((acc, file) => {
+                        acc[file.path] = file.content || '';
+                        return acc;
+                      }, {} as Record<string, string>)
+                    }
+                  />
                 </div>
               </Panel>
             </PanelGroup>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-[#1e1e1e]">
+          <div className="flex-1 flex items-center justify-center bg-[#161617]">
             <div className="text-center text-[#858585]">
-              <img src="/jstcode.png" alt="JstCode" className="h-24 w-auto mx-auto mb-6 opacity-60" />
+              <img src="/all_G.png" alt="JstCode" className="h-48 w-auto mx-auto mb-6" />
               <div className="text-lg mb-2">Welcome to JstCode</div>
               <div className="text-sm">Upload a file from the Explorer to get started</div>
             </div>

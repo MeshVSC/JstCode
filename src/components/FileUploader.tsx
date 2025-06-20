@@ -2,16 +2,23 @@
 
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import ProjectUploader from './ProjectUploader';
 
 interface FileUploaderProps {
-  onFileUpload: (content: string, filename: string) => void;
+  onFileUpload?: (content: string, filename: string) => void;
+  onProjectUpload?: (files: Record<string, string>) => void;
+  mode?: 'single' | 'project';
 }
 
-export default function FileUploader({ onFileUpload }: FileUploaderProps) {
+export default function FileUploader({ 
+  onFileUpload, 
+  onProjectUpload, 
+  mode = 'project' 
+}: FileUploaderProps) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
-      if (file) {
+      if (file && onFileUpload) {
         const reader = new FileReader();
         reader.onload = (e) => {
           const content = e.target?.result as string;
@@ -31,6 +38,11 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
     },
     multiple: false,
   });
+
+  // Use ProjectUploader for project mode
+  if (mode === 'project' && onProjectUpload) {
+    return <ProjectUploader onProjectUpload={onProjectUpload} />;
+  }
 
   return (
     <div

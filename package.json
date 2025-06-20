@@ -11,9 +11,13 @@
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
     "@monaco-editor/react": "^4.7.0",
+    "@types/jszip": "^3.4.0",
+    "@typescript-eslint/parser": "^8.34.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
+    "jszip": "^3.10.1",
     "next": "15.3.4",
+    "prettier": "^3.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",

@@ -1,14 +1,25 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Sandpack } from '@codesandbox/sandpack-react';
 import ErrorBoundary from './ErrorBoundary';
+import ConsolePanel from './ConsolePanel';
+import { useConsoleCapture } from '@/hooks/useConsoleCapture';
 
 interface LivePreviewProps {
   code: string;
   filename: string;
+  allFiles?: Record<string, string>;
 }
 
-export default function LivePreview({ code, filename }: LivePreviewProps) {
+export default function LivePreview({ code, filename, allFiles }: LivePreviewProps) {
+  const { messages, clearMessages, handleSandpackMessage } = useConsoleCapture();
+
+  // Listen for console messages from Sandpack
+  useEffect(() => {
+    window.addEventListener('message', handleSandpackMessage);
+    return () => window.removeEventListener('message', handleSandpackMessage);
+  }, [handleSandpackMessage]);
   const getFileExtension = (filename: string) => {
     return filename.split('.').pop()?.toLowerCase() || 'tsx';
   };
@@ -18,12 +29,21 @@ export default function LivePreview({ code, filename }: LivePreviewProps) {
     return ext === 'tsx' || ext === 'ts';
   };
 
-  const files = {
-    [`/${filename}`]: {
-      code: code,
-      active: true,
-    },
-  };
+  // Prepare files for Sandpack - support multi-file projects
+  const files = allFiles && Object.keys(allFiles).length > 1 
+    ? Object.entries(allFiles).reduce((acc, [path, content]) => {
+        acc[`/${path}`] = {
+          code: content,
+          active: path === filename,
+        };
+        return acc;
+      }, {} as Record<string, { code: string; active?: boolean }>)
+    : {
+        [`/${filename}`]: {
+          code: code,
+          active: true,
+        },
+      };
 
   const template = isTypeScriptFile(filename) ? 'react-ts' : 'react';
 
@@ -61,38 +81,49 @@ export default function LivePreview({ code, filename }: LivePreviewProps) {
   };
 
   return (
-    <div className="h-full w-full relative">
-      <ErrorBoundary>
-        <Sandpack
-          template={template}
-          files={files}
-          options={{
-            showNavigator: false,
-            showTabs: false,
-            showLineNumbers: false,
-            showInlineErrors: true,
-            wrapContent: true,
-            editorHeight: '100%',
-            editorWidthPercentage: 0,
-            showOpenInCodeSandbox: false,
-            classes: {
-              'sp-wrapper': 'h-full',
-              'sp-layout': 'h-full',
-              'sp-preview-container': 'h-full',
-              'sp-preview-iframe': 'h-full',
-            },
-          }}
-          theme="dark"
-        />
-      </ErrorBoundary>
+    <div className="h-full w-full flex flex-col">
+      {/* Preview Area */}
+      <div className="flex-1 relative">
+        <ErrorBoundary>
+          <Sandpack
+            template={template}
+            files={files}
+            options={{
+              showNavigator: false,
+              showTabs: false,
+              showLineNumbers: false,
+              showInlineErrors: true,
+              wrapContent: true,
+              editorHeight: '100%',
+              editorWidthPercentage: 0,
+              autoReload: true,
+              recompileMode: 'delayed',
+              recompileDelay: 300,
+              classes: {
+                'sp-wrapper': 'h-full',
+                'sp-layout': 'h-full',
+                'sp-preview-container': 'h-full',
+                'sp-preview-iframe': 'h-full',
+              },
+            }}
+            theme="dark"
+          />
+        </ErrorBoundary>
+        
+        <button
+          onClick={openInCodeSandbox}
+          className="absolute bottom-4 right-4 w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10"
+          title="Open in CodeSandbox"
+        >
+          🚀
+        </button>
+      </div>
       
-      <button
-        onClick={openInCodeSandbox}
-        className="absolute bottom-4 right-4 w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10"
-        title="Open in CodeSandbox"
-      >
-        ?
-      </button>
+      {/* Console Panel */}
+      <ConsolePanel 
+        messages={messages} 
+        onClear={clearMessages} 
+      />
     </div>
   );
 }
