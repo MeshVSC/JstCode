@@ -38,8 +38,30 @@ export default function LivePreview({ code, filename }: LivePreviewProps) {
     );
   }
 
+  const openInCodeSandbox = () => {
+    const sandboxConfig = {
+      files: {
+        [filename]: {
+          content: code
+        },
+        'package.json': {
+          content: JSON.stringify({
+            dependencies: {
+              react: '^18.0.0',
+              'react-dom': '^18.0.0',
+              'react-scripts': '5.0.0'
+            }
+          }, null, 2)
+        }
+      }
+    };
+    
+    const parameters = btoa(JSON.stringify(sandboxConfig));
+    window.open(`https://codesandbox.io/api/v1/sandboxes/define?parameters=${parameters}`, '_blank');
+  };
+
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full relative">
       <ErrorBoundary>
         <Sandpack
           template={template}
@@ -52,6 +74,7 @@ export default function LivePreview({ code, filename }: LivePreviewProps) {
             wrapContent: true,
             editorHeight: '100%',
             editorWidthPercentage: 0,
+            showOpenInCodeSandbox: false,
             classes: {
               'sp-wrapper': 'h-full',
               'sp-layout': 'h-full',
@@ -62,6 +85,14 @@ export default function LivePreview({ code, filename }: LivePreviewProps) {
           theme="dark"
         />
       </ErrorBoundary>
+      
+      <button
+        onClick={openInCodeSandbox}
+        className="absolute bottom-4 right-4 w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10"
+        title="Open in CodeSandbox"
+      >
+        ?
+      </button>
     </div>
   );
 }
