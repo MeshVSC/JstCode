@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import ProjectUploader from './ProjectUploader';
+import TemplateSelector, { Template } from './TemplateSelector';
 
 interface FileUploaderProps {
   onFileUpload?: (content: string, filename: string) => void;
@@ -15,6 +16,14 @@ export default function FileUploader({
   onProjectUpload, 
   mode = 'project' 
 }: FileUploaderProps) {
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const handleTemplateSelect = (template: Template) => {
+    if (onProjectUpload) {
+      onProjectUpload(template.files);
+    }
+    setShowTemplates(false);
+  };
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
@@ -41,7 +50,19 @@ export default function FileUploader({
 
   // Use ProjectUploader for project mode
   if (mode === 'project' && onProjectUpload) {
-    return <ProjectUploader onProjectUpload={onProjectUpload} />;
+    return (
+      <>
+        <ProjectUploader 
+          onProjectUpload={onProjectUpload} 
+          onShowTemplates={() => setShowTemplates(true)}
+        />
+        <TemplateSelector
+          isOpen={showTemplates}
+          onClose={() => setShowTemplates(false)}
+          onSelectTemplate={handleTemplateSelect}
+        />
+      </>
+    );
   }
 
   return (

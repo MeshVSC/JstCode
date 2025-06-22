@@ -9,7 +9,7 @@ export function useConsoleCapture() {
   const addMessage = useCallback((
     type: ConsoleMessage['type'],
     message: string,
-    args?: any[]
+    args?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
   ) => {
     const newMessage: ConsoleMessage = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -27,34 +27,53 @@ export function useConsoleCapture() {
   }, []);
 
   const handleSandpackMessage = useCallback((event: MessageEvent) => {
-    // Handle messages from Sandpack iframe
-    if (event.data && event.data.type === 'console') {
-      const { method, data } = event.data;
+    // Handle various Sandpack message formats
+    const data = event.data;
+    
+    if (!data || typeof data !== 'object') return;
+    
+    // Handle console messages (new format)
+    if (data.type === 'console' && data.codesandbox && data.method) {
+      const { method, arguments: args } = data;
+      const message = args ? args.map((arg: any) => // eslint-disable-line @typescript-eslint/no-explicit-any 
+        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+      ).join(' ') : '';
       
       switch (method) {
         case 'log':
-          addMessage('log', data.join(' '), data);
+          addMessage('log', message, args);
           break;
         case 'warn':
-          addMessage('warn', data.join(' '), data);
+          addMessage('warn', message, args);
           break;
         case 'error':
-          addMessage('error', data.join(' '), data);
+          addMessage('error', message, args);
           break;
         case 'info':
-          addMessage('info', data.join(' '), data);
+          addMessage('info', message, args);
           break;
       }
+      return;
     }
     
-    // Handle build errors
-    if (event.data && event.data.type === 'build-error') {
-      addMessage('error', `Build Error: ${event.data.message}`);
+    // Handle errors from Sandpack
+    if (data.type === 'action' && data.action === 'notification' && data.notificationType === 'error') {
+      addMessage('error', data.title || 'Runtime Error');
+      return;
     }
     
-    // Handle runtime errors
-    if (event.data && event.data.type === 'runtime-error') {
-      addMessage('error', `Runtime Error: ${event.data.message}`);
+    // Handle compilation errors
+    if (data.type === 'compile-error' || data.type === 'runtime-error') {
+      addMessage('error', data.message || data.error || 'Compilation Error');
+      return;
+    }
+    
+    // Fallback: log any potential error messages
+    if (data.error || data.message) {
+      const message = data.error || data.message;
+      if (typeof message === 'string' && message.trim()) {
+        addMessage('error', message);
+      }
     }
   }, [addMessage]);
 

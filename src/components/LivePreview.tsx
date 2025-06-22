@@ -93,6 +93,8 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
               showTabs: false,
               showLineNumbers: false,
               showInlineErrors: true,
+              showConsole: true,
+              showConsoleButton: false,
               wrapContent: true,
               editorHeight: '100%',
               editorWidthPercentage: 0,

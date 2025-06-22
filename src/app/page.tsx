@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileUploader from '@/components/FileUploader';
 import CodeEditor from '@/components/CodeEditor';
@@ -14,6 +15,7 @@ import { getFileTypeInfo } from '@/types/project';
 
 export default function Home() {
   const previewRef = useRef<HTMLDivElement>(null);
+  const [layoutMode, setLayoutMode] = useState<'split' | 'editor' | 'preview'>('split');
   const {
     fileTree,
     isHydrated,
@@ -26,7 +28,23 @@ export default function Home() {
     getFileById,
     clearProject,
     loadProject,
+    getProjectSize,
   } = useFileTree();
+
+  // Initialize layout from settings
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('jstcode-editor-settings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        if (settings.defaultLayout) {
+          setLayoutMode(settings.defaultLayout);
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }, []);
 
   const activeFile = fileTree.activeFileId ? getFileById(fileTree.activeFileId) : null;
   const hasFiles = fileTree.structure.root.length > 0;
@@ -72,7 +90,7 @@ export default function Home() {
         {/* Header */}
         <div className="h-9 bg-[#2d2d30] flex items-center justify-between px-3 border-b border-[#3e3e42]">
           <span className="text-xs font-medium text-[#cccccc] uppercase tracking-wide">Explorer</span>
-          <img src="/logoicon_W.png" alt="JstCode" className="h-6 w-auto opacity-90" />
+          <Image src="/logoicon_W.png" alt="JstCode" width={24} height={24} className="opacity-90" style={{ width: 'auto', height: 'auto' }} />
         </div>
         
         {/* File Tree */}
@@ -103,18 +121,26 @@ export default function Home() {
         {/* Bottom Actions */}
         {hasFiles && (
           <div className="border-t border-[#3e3e42] p-2">
-            <div className="flex gap-2">
-              <PDFExporter 
-                previewRef={previewRef} 
-                filename={activeFile?.name || 'preview'} 
-              />
-              <button
-                onClick={clearProject}
-                className="px-3 py-1 text-xs bg-[#3e3e42] hover:bg-[#4e4e52] text-[#cccccc] rounded transition-colors"
-                title="Clear all files"
-              >
-                Clear
-              </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <PDFExporter 
+                  previewRef={previewRef} 
+                  filename={activeFile?.name || 'preview'} 
+                />
+                <button
+                  onClick={clearProject}
+                  className="px-3 py-1 text-xs bg-[#3e3e42] hover:bg-[#4e4e52] text-[#cccccc] rounded transition-colors"
+                  title="Clear all files"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="text-xs text-[#606060]">
+                {(() => {
+                  const size = getProjectSize();
+                  return `${size.files} files • ${size.sizeKB}KB`;
+                })()}
+              </div>
             </div>
           </div>
         )}
@@ -129,44 +155,72 @@ export default function Home() {
           getFileById={getFileById}
           onTabSelect={handleTabSelect}
           onTabClose={handleTabClose}
+          layoutMode={layoutMode}
+          onLayoutChange={setLayoutMode}
         />
 
         {/* Editor and Preview */}
         {activeFile ? (
           <div className="flex-1 relative">
-            <PanelGroup direction="horizontal" className="h-full">
-              <Panel defaultSize={50} minSize={30}>
-                <CodeEditor
-                  value={activeFile.content || ''}
-                  onChange={handleCodeChange}
-                  language={getFileTypeInfo(activeFile.name).language}
-                  activeFile={activeFile}
+            {layoutMode === 'editor' ? (
+              // Editor Only
+              <CodeEditor
+                value={activeFile.content || ''}
+                onChange={handleCodeChange}
+                language={getFileTypeInfo(activeFile.name).language}
+                activeFile={activeFile}
+              />
+            ) : layoutMode === 'preview' ? (
+              // Preview Only
+              <div className="h-full" ref={previewRef}>
+                <LivePreview 
+                  code={activeFile.content || ''} 
+                  filename={activeFile.name}
+                  allFiles={Object.values(fileTree.structure.files)
+                    .filter(file => file.type === 'file')
+                    .reduce((acc, file) => {
+                      acc[file.path] = file.content || '';
+                      return acc;
+                    }, {} as Record<string, string>)
+                  }
                 />
-              </Panel>
-              
-              <PanelResizeHandle className="w-px bg-[#3e3e42] hover:bg-[#4e4e52] transition-colors" />
-              
-              <Panel defaultSize={50} minSize={30}>
-                <div className="h-full" ref={previewRef}>
-                  <LivePreview 
-                    code={activeFile.content || ''} 
-                    filename={activeFile.name}
-                    allFiles={Object.values(fileTree.structure.files)
-                      .filter(file => file.type === 'file')
-                      .reduce((acc, file) => {
-                        acc[file.path] = file.content || '';
-                        return acc;
-                      }, {} as Record<string, string>)
-                    }
+              </div>
+            ) : (
+              // Split View
+              <PanelGroup direction="horizontal" className="h-full">
+                <Panel defaultSize={50} minSize={30}>
+                  <CodeEditor
+                    value={activeFile.content || ''}
+                    onChange={handleCodeChange}
+                    language={getFileTypeInfo(activeFile.name).language}
+                    activeFile={activeFile}
                   />
-                </div>
-              </Panel>
-            </PanelGroup>
+                </Panel>
+                
+                <PanelResizeHandle className="w-px bg-[#3e3e42] hover:bg-[#4e4e52] transition-colors" />
+                
+                <Panel defaultSize={50} minSize={30}>
+                  <div className="h-full" ref={previewRef}>
+                    <LivePreview 
+                      code={activeFile.content || ''} 
+                      filename={activeFile.name}
+                      allFiles={Object.values(fileTree.structure.files)
+                        .filter(file => file.type === 'file')
+                        .reduce((acc, file) => {
+                          acc[file.path] = file.content || '';
+                          return acc;
+                        }, {} as Record<string, string>)
+                      }
+                    />
+                  </div>
+                </Panel>
+              </PanelGroup>
+            )}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-[#161617]">
             <div className="text-center text-[#858585]">
-              <img src="/all_G.png" alt="JstCode" className="h-48 w-auto mx-auto mb-6" />
+              <Image src="/all_G.png" alt="JstCode" width={192} height={192} priority className="mx-auto mb-6" style={{ width: 'auto', height: 'auto' }} />
               <div className="text-lg mb-2">Welcome to JstCode</div>
               <div className="text-sm">Upload a file from the Explorer to get started</div>
             </div>

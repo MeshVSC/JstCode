@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FileNode, getFileTypeInfo } from '@/types/project';
 
 interface FileTreeProps {
@@ -18,9 +18,10 @@ interface FileTreeNodeProps {
   onFileDelete?: (fileId: string) => void;
   level: number;
   activeFileId: string | null;
+  searchQuery?: string;
 }
 
-function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activeFileId }: FileTreeNodeProps) {
+function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activeFileId, searchQuery }: FileTreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const indentation = level * 16;
 
@@ -46,11 +47,26 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
     return getFileTypeInfo(node.name).icon;
   };
 
-  const getNodeColor = () => {
-    if (node.type === 'folder') {
-      return '#cccccc';
-    }
-    return getFileTypeInfo(node.name).color;
+  // const getNodeColor = () => {
+  //   if (node.type === 'folder') {
+  //     return '#cccccc';
+  //   }
+  //   return getFileTypeInfo(node.name).color;
+  // };
+
+  const highlightText = (text: string, query?: string) => {
+    if (!query || !query.trim()) return text;
+    
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, index) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={index} className="bg-yellow-400 text-black rounded px-0.5">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
   };
 
   return (
@@ -65,8 +81,8 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
         onClick={handleClick}
       >
         <span className="mr-2 text-xs">{getNodeIcon()}</span>
-        <span className="flex-1 truncate" style={{ color: getNodeColor() }}>
-          {node.name}
+        <span className="flex-1 truncate" style={{ color: '#39ff14' }}>
+          {highlightText(node.name, searchQuery)}
         </span>
         {onFileDelete && (
           <button
@@ -93,11 +109,12 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
               <FileTreeNode
                 key={child.id}
                 node={child}
-                isActive={activeFileId === child.id}
+                isActive={child.id === activeFileId}
                 onFileSelect={onFileSelect}
                 onFileDelete={onFileDelete}
                 level={level + 1}
                 activeFileId={activeFileId}
+                searchQuery={searchQuery}
               />
             ))}
         </div>
@@ -113,6 +130,47 @@ export default function FileTree({
   onFileDelete, 
   level = 0 
 }: FileTreeProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut for search (Ctrl+P)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Filter files based on search query
+  const filterFiles = (nodes: FileNode[], query: string): FileNode[] => {
+    if (!query.trim()) return nodes;
+    
+    return nodes.reduce((acc: FileNode[], node) => {
+      const matchesName = node.name.toLowerCase().includes(query.toLowerCase());
+      
+      if (node.type === 'file') {
+        if (matchesName) acc.push(node);
+      } else if (node.type === 'folder' && node.children) {
+        const filteredChildren = filterFiles(node.children, query);
+        if (filteredChildren.length > 0 || matchesName) {
+          acc.push({
+            ...node,
+            children: filteredChildren.length > 0 ? filteredChildren : node.children
+          });
+        }
+      }
+      
+      return acc;
+    }, []);
+  };
+
+  const filteredFiles = filterFiles(files, searchQuery);
+
   if (files.length === 0) {
     return (
       <div className="text-center py-8 text-[#858585] text-xs">
@@ -121,7 +179,7 @@ export default function FileTree({
     );
   }
 
-  const sortedFiles = [...files].sort((a, b) => {
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
     // Folders first, then files
     if (a.type !== b.type) {
       return a.type === 'folder' ? -1 : 1;
@@ -130,18 +188,49 @@ export default function FileTree({
   });
 
   return (
-    <div className="space-y-0">
-      {sortedFiles.map(node => (
-        <FileTreeNode
-          key={node.id}
-          node={node}
-          isActive={activeFileId === node.id}
-          onFileSelect={onFileSelect}
-          onFileDelete={onFileDelete}
-          level={level}
-          activeFileId={activeFileId}
-        />
-      ))}
+    <div className="flex flex-col h-full">
+      {/* Search Input */}
+      <div className="p-2 border-b border-[#3e3e42]">
+        <div className="relative">
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search files... (Ctrl+P)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-1 text-xs bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#007acc]"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#858585] hover:text-[#cccccc] text-xs"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        {searchQuery && filteredFiles.length === 0 && (
+          <div className="text-xs text-[#858585] mt-1">No files found</div>
+        )}
+      </div>
+
+      {/* File Tree */}
+      <div className="flex-1 overflow-auto">
+        <div className="space-y-0">
+          {sortedFiles.map(node => (
+            <FileTreeNode
+              key={node.id}
+              node={node}
+              isActive={activeFileId === node.id}
+              onFileSelect={onFileSelect}
+              onFileDelete={onFileDelete}
+              level={level}
+              activeFileId={activeFileId}
+              searchQuery={searchQuery}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

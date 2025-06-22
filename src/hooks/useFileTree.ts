@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { FileNode, ProjectStructure, FileTree, createFileNode } from '@/types/project';
+import { FileNode, FileTree, createFileNode } from '@/types/project';
 
 interface UseFileTreeReturn {
   fileTree: FileTree;
@@ -17,6 +17,7 @@ interface UseFileTreeReturn {
   getFileByPath: (path: string) => FileNode | undefined;
   clearProject: () => void;
   loadProject: (files: Record<string, string>) => void;
+  getProjectSize: () => { files: number; sizeKB: number };
 }
 
 const STORAGE_KEY = 'jstcode-project';
@@ -46,10 +47,33 @@ export function useFileTree(): UseFileTreeReturn {
     }
   }, []);
 
-  // Save to localStorage whenever fileTree changes
+  // Save to localStorage whenever fileTree changes with error handling
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fileTree));
+      try {
+        const dataString = JSON.stringify(fileTree);
+        
+        // Check if data is too large (5MB limit for most browsers)
+        if (dataString.length > 5 * 1024 * 1024) {
+          console.warn('Project too large for localStorage, skipping save');
+          return;
+        }
+        
+        localStorage.setItem(STORAGE_KEY, dataString);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'QuotaExceededError') {
+          console.warn('localStorage quota exceeded, clearing old data');
+          // Clear the stored project and try again with current state
+          localStorage.removeItem(STORAGE_KEY);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fileTree));
+          } catch {
+            console.error('Still unable to save after clearing, project too large');
+          }
+        } else {
+          console.error('Error saving to localStorage:', error);
+        }
+      }
     }
   }, [fileTree]);
 
@@ -86,7 +110,7 @@ export function useFileTree(): UseFileTreeReturn {
       const parentFile = parentPath ? getFileByPath(parentPath) : null;
       const newFiles = { ...prev.structure.files, [newFile.id]: newFile };
       
-      let newRoot = [...prev.structure.root];
+      const newRoot = [...prev.structure.root];
       
       if (parentFile && parentFile.type === 'folder') {
         // Add to parent folder
@@ -121,7 +145,7 @@ export function useFileTree(): UseFileTreeReturn {
       const parentFile = parentPath ? getFileByPath(parentPath) : null;
       const newFiles = { ...prev.structure.files, [newFolder.id]: newFolder };
       
-      let newRoot = [...prev.structure.root];
+      const newRoot = [...prev.structure.root];
       
       if (parentFile && parentFile.type === 'folder') {
         // Add to parent folder
@@ -299,6 +323,13 @@ export function useFileTree(): UseFileTreeReturn {
     setFileTree(newFileTree);
   }, []);
 
+  const getProjectSize = useCallback(() => {
+    const fileCount = Object.keys(fileTree.structure.files).length;
+    const sizeBytes = JSON.stringify(fileTree).length;
+    const sizeKB = Math.round(sizeBytes / 1024);
+    return { files: fileCount, sizeKB };
+  }, [fileTree]);
+
   return {
     fileTree,
     isHydrated,
@@ -313,5 +344,6 @@ export function useFileTree(): UseFileTreeReturn {
     getFileByPath,
     clearProject,
     loadProject,
+    getProjectSize,
   };
 }

@@ -115,7 +115,7 @@ function readFileContent(file: File): Promise<string> {
 function getCleanPath(file: File): string {
   // For individual files, use just the filename
   // For files with webkitRelativePath, use that
-  return (file as any).webkitRelativePath || file.name;
+  return (file as any).webkitRelativePath || file.name; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 function isValidCodeFile(filename: string): boolean {
@@ -164,7 +164,7 @@ export function detectProjectType(files: Record<string, string>): string {
         if (pkg.dependencies?.vue || pkg.devDependencies?.vue) {
           return 'vue';
         }
-      } catch (e) {
+      } catch {
         // Invalid JSON, continue with other detection
       }
     }

@@ -1,24 +1,26 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { parseProjectFromFiles, parseProjectFromDataTransfer } from '@/utils/projectParser';
 
 interface ProjectUploaderProps {
   onProjectUpload: (files: Record<string, string>) => void;
+  onShowTemplates?: () => void;
 }
 
-export default function ProjectUploader({ onProjectUpload }: ProjectUploaderProps) {
+export default function ProjectUploader({ onProjectUpload, onShowTemplates }: ProjectUploaderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState('');
 
   const onDrop = useCallback(
-    async (acceptedFiles: File[], fileRejections: any[], event: any) => {
+    async (acceptedFiles: File[], fileRejections: any[], event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       setIsLoading(true);
       setProgress('Processing files...');
 
       try {
-        let projectFiles: Record<string, string> = {};
+        const projectFiles: Record<string, string> = {};
 
         // Check for drag and drop from file system (folders)
         if (event.dataTransfer?.items) {
@@ -31,7 +33,7 @@ export default function ProjectUploader({ onProjectUpload }: ProjectUploaderProp
         // Handle uploaded files (including ZIP)
         if (acceptedFiles.length > 0) {
           setProgress('Reading uploaded files...');
-          const uploadedFiles = await parseProjectFromFiles(acceptedFiles as any);
+          const uploadedFiles = await parseProjectFromFiles(acceptedFiles as any); // eslint-disable-line @typescript-eslint/no-explicit-any
           Object.assign(projectFiles, uploadedFiles);
         }
 
@@ -97,9 +99,9 @@ export default function ProjectUploader({ onProjectUpload }: ProjectUploaderProp
           {isLoading ? (
             <span className="text-3xl">⏳</span>
           ) : isDragActive ? (
-            <img src="/blocks_W.png" alt="Drop files" className="h-10 w-auto opacity-80" />
+            <Image src="/blocks_W.png" alt="Drop files" width={40} height={40} className="opacity-80" />
           ) : (
-            <img src="/blocks_W.png" alt="Upload files" className="h-8 w-auto opacity-60" />
+            <Image src="/blocks_W.png" alt="Upload files" width={32} height={32} className="opacity-60" />
           )}
         </div>
         
@@ -117,15 +119,25 @@ export default function ProjectUploader({ onProjectUpload }: ProjectUploaderProp
             <p className="text-[#cccccc] font-medium mb-2">
               Drag & drop your project here
             </p>
-            <div className="space-y-1 text-sm text-[#858585]">
+            <div className="space-y-1 text-sm text-[#858585] mb-3">
               <p>✓ Single files (.tsx, .ts, .jsx, .js)</p>
               <p>✓ Multiple files or folders</p>
               <p>✓ Zip archives</p>
               <p>✓ Full React/Next.js projects</p>
             </div>
-            <p className="text-xs text-[#606060] mt-3">
-              or click to select files
-            </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-[#606060]">
+                or click to select files
+              </p>
+              {onShowTemplates && (
+                <button
+                  onClick={onShowTemplates}
+                  className="px-4 py-2 bg-[#007acc] hover:bg-[#0086d3] text-white text-sm rounded transition-colors"
+                >
+                  🚀 Start from Template
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

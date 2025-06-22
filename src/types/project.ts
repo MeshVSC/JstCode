@@ -23,7 +23,7 @@ export interface FileTree {
 export interface FileOperation {
   type: 'create' | 'update' | 'delete' | 'rename';
   fileId: string;
-  data?: any;
+  data?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export type SupportedFileTypes = 

@@ -7,7 +7,7 @@ export interface ConsoleMessage {
   type: 'log' | 'warn' | 'error' | 'info';
   message: string;
   timestamp: number;
-  args?: any[];
+  args?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 interface ConsolePanelProps {
@@ -41,7 +41,7 @@ const getMessageColor = (type: ConsoleMessage['type']) => {
   }
 };
 
-function formatMessage(message: string, args?: any[]): string {
+function formatMessage(message: string, args?: any[]): string { // eslint-disable-line @typescript-eslint/no-explicit-any
   if (!args || args.length === 0) return message;
   
   // Simple string interpolation for console messages
