@@ -105,6 +105,13 @@ export async function formatCode(
     return formatted;
   } catch (error) {
     console.error('Formatting error:', error);
+    
+    // If it's a parsing error with DecimalLiteral or similar, return original code
+    if (error instanceof Error && error.message.includes('DecimalLiteral')) {
+      console.warn('Skipping formatting due to unsupported syntax');
+      return code;
+    }
+    
     throw new Error(`Failed to format code: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

@@ -29,6 +29,11 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
     return ext === 'tsx' || ext === 'ts';
   };
 
+  const isReactFile = (filename: string) => {
+    const ext = getFileExtension(filename);
+    return ext === 'tsx' || ext === 'jsx';
+  };
+
   // Prepare files for Sandpack - support multi-file projects
   const files = allFiles && Object.keys(allFiles).length > 1 
     ? Object.entries(allFiles).reduce((acc, [path, content]) => {
@@ -39,13 +44,29 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
         return acc;
       }, {} as Record<string, { code: string; active?: boolean }>)
     : {
-        [`/${filename}`]: {
+        '/App.tsx': {
           code: code,
           active: true,
         },
       };
 
   const template = isTypeScriptFile(filename) ? 'react-ts' : 'react';
+  
+  // Debug: log actual code being rendered
+  console.log('Actual code being rendered:', code);
+
+  // Check if this is a React file that can be previewed
+  if (!isReactFile(filename)) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-gray-50">
+        <div className="text-center text-gray-500">
+          <div className="text-4xl mb-2">📄</div>
+          <p>Live preview is only available for React files (.tsx, .jsx)</p>
+          <p className="text-sm mt-2">Current file: {filename}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!code.trim()) {
     return (
@@ -91,22 +112,8 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
             options={{
               showNavigator: false,
               showTabs: false,
-              showLineNumbers: false,
-              showInlineErrors: true,
-              showConsole: true,
-              showConsoleButton: false,
-              wrapContent: true,
-              editorHeight: '100%',
               editorWidthPercentage: 0,
               autoReload: true,
-              recompileMode: 'delayed',
-              recompileDelay: 300,
-              classes: {
-                'sp-wrapper': 'h-full',
-                'sp-layout': 'h-full',
-                'sp-preview-container': 'h-full',
-                'sp-preview-iframe': 'h-full',
-              },
             }}
             theme="dark"
           />
