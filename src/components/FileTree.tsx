@@ -42,7 +42,15 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
 
   const getNodeIcon = () => {
     if (node.type === 'folder') {
-      return isExpanded ? '📂' : '📁';
+      return isExpanded ? (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+        </svg>
+      ) : (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+        </svg>
+      );
     }
     return getFileTypeInfo(node.name).icon;
   };
@@ -80,7 +88,7 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
         style={{ paddingLeft: `${8 + indentation}px` }}
         onClick={handleClick}
       >
-        <span className="mr-2 text-xs">{getNodeIcon()}</span>
+        <span className="mr-2 text-xs flex items-center">{getNodeIcon()}</span>
         <span className="flex-1 truncate" style={{ color: '#39ff14' }}>
           {highlightText(node.name, searchQuery)}
         </span>

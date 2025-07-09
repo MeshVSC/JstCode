@@ -105,10 +105,10 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
         {/* Tabs */}
         <div className="flex border-b border-[#3e3e42]">
           {[
-            { key: 'editor', label: '📝 Editor', title: 'Editor Settings' },
-            { key: 'behavior', label: '⚡ Behavior', title: 'Workflow & Behavior' },
-            { key: 'advanced', label: '🔧 Advanced', title: 'Advanced Features' },
-            { key: 'storage', label: '💾 Storage', title: 'Storage & Cache' },
+            { key: 'editor', label: 'Editor', title: 'Editor Settings' },
+            { key: 'behavior', label: 'Behavior', title: 'Workflow & Behavior' },
+            { key: 'advanced', label: 'Advanced', title: 'Advanced Features' },
+            { key: 'storage', label: 'Storage', title: 'Storage & Cache' },
           ].map((tab) => (
             <button
               key={tab.key}

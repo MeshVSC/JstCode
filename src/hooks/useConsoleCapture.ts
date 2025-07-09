@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ConsoleMessage } from '@/components/ConsolePanel';
 
 export function useConsoleCapture() {
   const [messages, setMessages] = useState<ConsoleMessage[]>();
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const addMessage = useCallback((
     type: ConsoleMessage['type'],
@@ -19,7 +20,14 @@ export function useConsoleCapture() {
       args,
     };
 
-    setMessages(prev => [...(prev || []), newMessage]);
+    // Debounce message updates to prevent rapid re-renders
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+    }
+    
+    messageTimeoutRef.current = setTimeout(() => {
+      setMessages(prev => [...(prev || []), newMessage]);
+    }, 100);
   }, []);
 
   const clearMessages = useCallback(() => {

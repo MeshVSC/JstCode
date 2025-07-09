@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileUploader from '@/components/FileUploader';
@@ -46,8 +46,82 @@ export default function Home() {
     }
   }, []);
 
+  // Global drag and drop for entire app - should just work
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.dataTransfer?.items) {
+        const items = Array.from(e.dataTransfer.items);
+        const projectFiles: Record<string, string> = {};
+        
+        for (const item of items) {
+          if (item.kind === 'file') {
+            const entry = item.webkitGetAsEntry();
+            if (entry) {
+              await processEntry(entry, projectFiles);
+            }
+          }
+        }
+        
+        if (Object.keys(projectFiles).length > 0) {
+          clearProject();
+          loadProject(projectFiles);
+        }
+      }
+    };
+
+    const processEntry = async (entry: any, files: Record<string, string>, path = '') => {
+      if (entry.isFile) {
+        const file = await new Promise<File>((resolve) => entry.file(resolve));
+        if (isCodeFile(file.name)) {
+          const content = await file.text();
+          const fullPath = path ? `${path}/${file.name}` : file.name;
+          files[fullPath] = content;
+        }
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const entries = await new Promise<any[]>((resolve) => reader.readEntries(resolve));
+        
+        for (const childEntry of entries) {
+          const newPath = path ? `${path}/${entry.name}` : entry.name;
+          await processEntry(childEntry, files, newPath);
+        }
+      }
+    };
+
+    const isCodeFile = (filename: string) => {
+      const ext = filename.split('.').pop()?.toLowerCase();
+      return ['tsx', 'ts', 'jsx', 'js', 'html', 'htm', 'css', 'json', 'md'].includes(ext || '');
+    };
+
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop', handleDrop);
+
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('drop', handleDrop);
+    };
+  }, [clearProject, loadProject]);
+
   const activeFile = fileTree.activeFileId ? getFileById(fileTree.activeFileId) : null;
   const hasFiles = fileTree.structure.root.length > 0;
+
+  // Memoize allFiles to prevent unnecessary Sandpack reloads
+  const allFiles = useMemo(() => {
+    return Object.values(fileTree.structure.files)
+      .filter(file => file.type === 'file')
+      .reduce((acc, file) => {
+        acc[file.path] = file.content || '';
+        return acc;
+      }, {} as Record<string, string>);
+  }, [fileTree.structure.files]);
 
   const handleFileUpload = (content: string, name: string) => {
     addFile(name, content);
@@ -176,13 +250,7 @@ export default function Home() {
                 <LivePreview 
                   code={activeFile.content || ''} 
                   filename={activeFile.name}
-                  allFiles={Object.values(fileTree.structure.files)
-                    .filter(file => file.type === 'file')
-                    .reduce((acc, file) => {
-                      acc[file.path] = file.content || '';
-                      return acc;
-                    }, {} as Record<string, string>)
-                  }
+                  allFiles={allFiles}
                 />
               </div>
             ) : (
@@ -204,13 +272,7 @@ export default function Home() {
                     <LivePreview 
                       code={activeFile.content || ''} 
                       filename={activeFile.name}
-                      allFiles={Object.values(fileTree.structure.files)
-                        .filter(file => file.type === 'file')
-                        .reduce((acc, file) => {
-                          acc[file.path] = file.content || '';
-                          return acc;
-                        }, {} as Record<string, string>)
-                      }
+                      allFiles={allFiles}
                     />
                   </div>
                 </Panel>

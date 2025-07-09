@@ -79,7 +79,11 @@ export default function FileUploader({
     >
       <input {...getInputProps()} />
       <div className="space-y-2">
-        <div className="text-2xl">📁</div>
+        <div className="text-2xl">
+          <svg className="w-8 h-8 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+          </svg>
+        </div>
         {isDragActive ? (
           <p className="text-blue-600">Drop your TSX file here...</p>
         ) : (

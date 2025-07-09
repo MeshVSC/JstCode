@@ -42,17 +42,19 @@ Deploy your own instance of JstCode instantly:
 - **Auto-refresh Preview**: 300ms debounced updates on code changes
 - **Sandpack Integration**: Full React/TypeScript preview environment
 - **Multi-file Support**: Preview works with entire project structure
+- **HTML File Support**: Direct HTML file preview with iframe rendering ✅
+- **Path Resolution**: Automatic @/ alias resolution for imports ✅
 - **Console Panel**: Collapsible console with error/warning counts ✅
 - **Error Boundaries**: Graceful error handling and display
 
 #### 3. ✅ **Drag & Drop Import** - FULLY WORKING
 - **Single File Upload**: Drag and drop individual code files ✅
 - **Multiple File Upload**: Upload multiple files at once ✅
-- **File Type Filtering**: Supports .tsx, .ts, .jsx, .js, .json, .css, .html ✅
-- **Advanced Features**: ✅ *Re-enabled*
-  - Folder uploads ✅ *Working*
-  - ZIP file extraction ✅ *Working*
-  - Complex project parsing ✅ *Working*
+- **Folder Upload**: Full directory structure upload with recursive parsing ✅
+- **Smart Main File Detection**: Automatically opens index/main file based on package.json ✅
+- **File Type Support**: .tsx, .ts, .jsx, .js, .json, .css, .html, .md ✅
+- **Project Structure**: Maintains folder hierarchy and file relationships ✅
+- **Global Drop Zone**: Drop files anywhere on the app interface ✅
 
 #### 4. ✅ **Code Formatting** - FULLY WORKING
 - **Prettier Integration**: ✅ *Browser-compatible imports working*
@@ -70,6 +72,7 @@ Deploy your own instance of JstCode instantly:
 
 ### 🎨 **Design Features - FULLY IMPLEMENTED**
 - **VS Code-Inspired UI**: Exact color matching with professional dark theme
+- **Clean Icon System**: Professional SVG icons throughout (no emojis) ✅
 - **Vertical Menu Bar**: Settings and screenshot capture icons ✅
 - **File Tree**: Expandable folders, file type icons, hover states
 - **Tab System**: Clean tabs with close buttons and active states  
@@ -77,6 +80,7 @@ Deploy your own instance of JstCode instantly:
 - **Editor Toolbar**: File info, formatting controls, and status indicators
 - **Project Size Display**: Shows file count and storage usage
 - **Responsive Layout**: Works on all screen sizes
+- **Smart Drop Zones**: Visual feedback for drag and drop operations ✅
 
 ## 🚧 Known Issues & Current Limitations
 
@@ -214,13 +218,13 @@ src/
 15. **📱 Responsive Design**: Works on all screen sizes with resizable panels
 
 ### **Enhanced User Workflow:**
-1. ✅ **Start** with templates or drag and drop TSX/TS/JS files, folders, or ZIP projects
-2. ✅ **Organize** files in the sidebar file tree with search functionality (Ctrl+P)
+1. ✅ **Start** by dragging any project folder directly onto the app interface  
+2. ✅ **Auto-open** main file - JstCode intelligently finds index/main based on project config
 3. ✅ **Code** with Monaco editor featuring IntelliSense, autocomplete, and find/replace
-4. ✅ **Enhance** code with 📦 package manager (lucide-react, framer-motion, etc.)
-5. ✅ **Style** visually with CSS inspector panel for live design editing
+4. ✅ **Preview** instantly - React components render live, HTML files display directly
+5. ✅ **Navigate** with file tree, tabs, and search functionality (Ctrl+P)
 6. ✅ **Format** code with Prettier button or Ctrl+S auto-format
-7. ✅ **Preview** live updates instantly with console output and error handling
+7. ✅ **Debug** with live console output and error handling
 8. ✅ **Customize** editor with settings panel (theme, font, layout, etc.)
 9. ✅ **Export** as PDF or deploy your own instance with one-click buttons
 10. ✅ **Persist** projects and preferences automatically between sessions
@@ -354,20 +358,54 @@ JstCode includes a camera icon in the vertical menu bar for enhanced AI developm
 - All core features fully working and optimized for performance
 
 **Latest Updates (This Session):**
-- ✅ **Restructured Settings Panel**: New tabbed interface organized by priority (Editor/Behavior/Advanced/Storage)
-- ✅ **Layout Toggle Buttons**: Visual SVG icons for Editor-only, Split-view, and Preview-only modes
+- ✅ **Smart Project Loading**: Auto-detects main file from package.json configuration
+- ✅ **HTML File Support**: Direct HTML preview with iframe rendering and script detection
+- ✅ **Path Alias Resolution**: Automatic @/ import resolution for complex projects  
+- ✅ **Global Drag & Drop**: Drop folders anywhere on the app interface
 - ✅ **Professional Icons**: Replaced all emoji icons with clean SVG graphics
-- ✅ **Acid Green File Names**: File explorer and tabs now use distinctive #39ff14 color
-- ✅ **Performance Optimizations**: Added Turbopack config, package import optimization, better caching
-- ✅ **Fixed Build Issues**: Resolved TypeScript errors, chunk loading issues, and cache corruption
-- ✅ **Enhanced Camera Icon**: Improved screenshot button with proper camera SVG design
+- ✅ **Improved Error Handling**: Better preview fallbacks and error recovery
+- ✅ **Console Optimization**: Enhanced console message parsing and display
+- ✅ **Fixed Preview Flickering**: Resolved red/black screen alternation issues
+- ✅ **Enhanced Dependencies**: Added esbuild-wasm, @babel/standalone for custom bundling
+- ✅ **Routing Improvements**: Automatic BrowserRouter to HashRouter conversion
+- ⚠️ **Multi-page HTML Navigation**: Partial implementation (see Known Issues)
+
+## 🚨 **Current Known Issues - Multi-page HTML Navigation**
+
+### **Problem:**
+Multi-page HTML projects with separate .html files (like nymph project) cannot navigate between pages in the preview. Clicking navigation elements (cards, buttons) that should navigate to `/dashboard.html` results in 404 errors.
+
+### **What Was Tried:**
+1. **Custom esbuild-wasm Bundler**: Created CustomPreview.tsx with esbuild-wasm for real bundling
+   - **Result**: Black screen, bundler too complex for browser environment
+   - **Files**: CustomPreview.tsx (exists but not used)
+
+2. **Sandpack Routing Fixes**: Automatic BrowserRouter to HashRouter conversion
+   - **Result**: Works for single-page React apps, but nymph project uses separate .html files
+   - **Files**: LivePreview.tsx (lines 61-90)
+
+3. **Multi-page HTML Navigation Handler**: JavaScript injection to intercept clicks and load target HTML files
+   - **Result**: Syntax errors, excessive debug output, navigation still fails
+   - **Files**: LivePreview.tsx (lines 207-247)
+
+### **Root Cause:**
+The nymph project is a multi-page HTML application with separate files (index.html, dashboard.html) that expect server-side routing. Sandpack is designed for single-page React applications and cannot handle multi-file HTML navigation.
+
+### **Next Steps - Suggestions:**
+1. **Simple iframe switching**: Create a file selector dropdown that switches iframe src between HTML files
+2. **Server simulation**: Create a mini HTTP server simulation in the preview iframe
+3. **File concatenation**: Merge all HTML files into a single-page app with JavaScript routing
+4. **Accept limitation**: Document that multi-page HTML navigation is not supported in preview
+
+### **Files Modified:**
+- `package.json`: Added esbuild-wasm, @babel/standalone dependencies
+- `LivePreview.tsx`: Added routing fixes and navigation handlers
+- `CustomPreview.tsx`: Created (unused) custom bundler component
 
 **Next Session TODO:**
-- Optional: Implement GitHub OAuth integration for cloud project saving
-- Optional: Add "Deploy My Project" functionality for user-created projects
-- Optional: Integrate CSS injection into preview iframe for Visual Design Panel
-- Optional: Add file tree context menus implementation
-- Consider: Mobile responsiveness improvements for smaller screens
+- Fix multi-page HTML navigation using one of the suggested approaches above
+- Remove unused CustomPreview.tsx component
+- Clean up navigation handler code in LivePreview.tsx
 
 ---
 

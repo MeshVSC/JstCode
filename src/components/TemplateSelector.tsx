@@ -16,7 +16,7 @@ const TEMPLATES: Template[] = [
     id: 'react-counter',
     name: 'React Counter',
     description: 'Simple counter component with useState hook',
-    icon: '🔢',
+    icon: '#',
     category: 'react',
     files: {
       'Counter.tsx': `import React, { useState } from 'react';
@@ -94,7 +94,7 @@ export default function Counter() {
     id: 'react-todo',
     name: 'Todo List',
     description: 'Interactive todo list with add/remove functionality',
-    icon: '📝',
+    icon: '✓',
     category: 'react',
     files: {
       'TodoApp.tsx': `import React, { useState } from 'react';

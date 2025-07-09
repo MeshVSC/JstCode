@@ -313,11 +313,81 @@ export function useFileTree(): UseFileTreeReturn {
       .filter(node => !node.parent)
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Set first file as active
-    const firstFile = fileNodes[0];
-    if (firstFile) {
-      newFileTree.activeFileId = firstFile.id;
-      newFileTree.openTabs = [firstFile.id];
+    // Find and set main file as active by reading project configuration
+    const findMainFile = () => {
+      // 1. Check package.json for main entry point
+      const packageJsonFile = fileNodes.find(file => file.name === 'package.json');
+      if (packageJsonFile) {
+        try {
+          const packageJson = JSON.parse(files[packageJsonFile.path] || '{}');
+          
+          // Check various entry points in package.json
+          const entryPoints = [
+            packageJson.main,
+            packageJson.module,
+            packageJson.browser,
+            packageJson.source
+          ].filter(Boolean);
+          
+          for (const entry of entryPoints) {
+            const entryFile = fileNodes.find(file => 
+              file.path === entry || 
+              file.path.endsWith('/' + entry) ||
+              file.path === entry.replace('./', '')
+            );
+            if (entryFile) return entryFile;
+          }
+          
+          // Check scripts for dev/start commands that might indicate main file
+          if (packageJson.scripts) {
+            const devScript = packageJson.scripts.dev || packageJson.scripts.start;
+            if (devScript && typeof devScript === 'string') {
+              // Extract file from script like "vite" -> look for vite.config, or "next dev" -> look for pages/
+              if (devScript.includes('vite')) {
+                const viteConfig = fileNodes.find(file => file.name.includes('vite.config'));
+                if (viteConfig) {
+                  // For Vite, look for src/main or src/index
+                  const viteMain = fileNodes.find(file => 
+                    file.path.includes('src/main') || file.path.includes('src/index')
+                  );
+                  if (viteMain) return viteMain;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Invalid JSON, continue
+        }
+      }
+      
+      // 2. Check for HTML files with script tags
+      const htmlFiles = fileNodes.filter(file => file.name.endsWith('.html'));
+      for (const htmlFile of htmlFiles) {
+        const content = files[htmlFile.path] || '';
+        const scriptMatch = content.match(/<script[^>]*src=["']([^"']+)["']/);
+        if (scriptMatch) {
+          const scriptSrc = scriptMatch[1];
+          const scriptFile = fileNodes.find(file => 
+            file.path.endsWith(scriptSrc) || file.name === scriptSrc
+          );
+          if (scriptFile) return scriptFile;
+        }
+      }
+      
+      // 3. Fallback: find any file named index, main, app (generic)
+      const genericMain = fileNodes.find(file => 
+        /^(index|main|app)\.(tsx?|jsx?|html?)$/.test(file.name)
+      );
+      if (genericMain) return genericMain;
+      
+      // 4. Final fallback: first file
+      return fileNodes[0];
+    };
+
+    const defaultFile = findMainFile();
+    if (defaultFile) {
+      newFileTree.activeFileId = defaultFile.id;
+      newFileTree.openTabs = [defaultFile.id];
     }
 
     setFileTree(newFileTree);
