@@ -19,6 +19,37 @@ export const metadata: Metadata = {
     icon: "/icon_B.png",
     apple: "/icon_B.png",
   },
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "JstCode",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    title: "JstCode - JavaScript & TypeScript Code Editor",
+    description: "A powerful online code editor for JavaScript and TypeScript development",
+    url: "https://jstcode.com",
+    siteName: "JstCode",
+    type: "website",
+    images: [
+      {
+        url: "/jstcode.png",
+        width: 1200,
+        height: 630,
+        alt: "JstCode Code Editor",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "JstCode - JavaScript & TypeScript Code Editor",
+    description: "A powerful online code editor for JavaScript and TypeScript development",
+    images: ["/jstcode.png"],
+  },
 };
 
 export default function RootLayout({

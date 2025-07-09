@@ -190,14 +190,14 @@ window.addEventListener('unhandledrejection', (e) => {
   console.log('Actual code being rendered:', code);
 
   // Check if this is an HTML file or project has multiple HTML files
-  const hasMultipleHtmlFiles = Object.keys(allFiles).filter(path => 
+  const hasMultipleHtmlFiles = Object.keys(allFiles || {}).filter(path => 
     path.endsWith('.html') || path.endsWith('.htm')
   ).length > 1;
 
   if (isHtmlFile(filename) || hasMultipleHtmlFiles) {
     // For multi-page HTML projects, create a mini server-like experience
     const createMultiPageHtml = () => {
-      const htmlFiles = Object.keys(allFiles).filter(path => 
+      const htmlFiles = Object.keys(allFiles || {}).filter(path => 
         path.endsWith('.html') || path.endsWith('.htm')
       );
       

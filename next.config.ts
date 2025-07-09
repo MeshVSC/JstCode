@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
+const withPWA = require("next-pwa");
 
 const nextConfig: NextConfig = {
+  // Enable static export
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
   // Optimize for development speed
   experimental: {
     optimizePackageImports: ['@codesandbox/sandpack-react', '@monaco-editor/react'],
@@ -21,4 +28,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+})(nextConfig);

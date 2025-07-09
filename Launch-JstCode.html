@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JstCode Launcher</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .launcher {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background: url('./out/jstcode.png') center/contain no-repeat;
+            border-radius: 20px;
+        }
+        h1 {
+            margin: 0 0 10px;
+            font-size: 2.5em;
+            font-weight: 600;
+        }
+        p {
+            margin: 0 0 30px;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .launch-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        .launch-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="launcher">
+        <div class="icon"></div>
+        <h1>JstCode</h1>
+        <p>Professional JavaScript & TypeScript Code Editor</p>
+        
+        <a href="./out/index.html" class="launch-btn">🚀 Launch JstCode</a>
+        
+        <div class="info">
+            <h3>✨ Features</h3>
+            <div class="features">
+                <div class="feature">
+                    <strong>📱 PWA Ready</strong><br>
+                    Install as an app on any device
+                </div>
+                <div class="feature">
+                    <strong>🔒 Works Offline</strong><br>
+                    Full functionality without internet
+                </div>
+                <div class="feature">
+                    <strong>⚡ Lightning Fast</strong><br>
+                    Optimized for performance
+                </div>
+                <div class="feature">
+                    <strong>🎨 Multi-File Support</strong><br>
+                    Edit multiple files simultaneously
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-launch if preferred
+        if (localStorage.getItem('jstcode-auto-launch') === 'true') {
+            window.location.href = './out/index.html';
+        }
+        
+        // Handle launch button click
+        document.querySelector('.launch-btn').addEventListener('click', function() {
+            localStorage.setItem('jstcode-auto-launch', 'true');
+        });
+    </script>
+</body>
+</html>
