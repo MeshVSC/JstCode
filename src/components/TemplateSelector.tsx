@@ -11,6 +11,128 @@ export interface Template {
   files: Record<string, string>;
 }
 
+const BLANK_TEMPLATES: Template[] = [
+  {
+    id: 'blank-react-tsx',
+    name: 'Blank React Component (TypeScript)',
+    description: 'Empty React component with TypeScript (.tsx)',
+    icon: '⚛️',
+    category: 'react',
+    files: {
+      'Component.tsx': `import React from 'react';
+
+export default function Component() {
+  return (
+    <div>
+      {/* Your component content goes here */}
+    </div>
+  );
+}`
+    }
+  },
+  {
+    id: 'blank-react-jsx',
+    name: 'Blank React Component (JavaScript)',
+    description: 'Empty React component with JavaScript (.jsx)',
+    icon: '⚛️',
+    category: 'react',
+    files: {
+      'Component.jsx': `import React from 'react';
+
+export default function Component() {
+  return (
+    <div>
+      {/* Your component content goes here */}
+    </div>
+  );
+}`
+    }
+  },
+  {
+    id: 'blank-html',
+    name: 'Blank HTML Document',
+    description: 'Empty HTML5 document template',
+    icon: '🌐',
+    category: 'html',
+    files: {
+      'index.html': `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* Your CSS styles go here */
+    </style>
+</head>
+<body>
+    <!-- Your HTML content goes here -->
+    
+    <script>
+        // Your JavaScript code goes here
+    </script>
+</body>
+</html>`
+    }
+  },
+  {
+    id: 'blank-js',
+    name: 'Blank JavaScript (.js)',
+    description: 'Empty JavaScript file',
+    icon: '📜',
+    category: 'javascript',
+    files: {
+      'script.js': `// Your JavaScript code goes here
+
+console.log('Hello, World!');`
+    }
+  },
+  {
+    id: 'blank-ts',
+    name: 'Blank TypeScript (.ts)',
+    description: 'Empty TypeScript file',
+    icon: '📜',
+    category: 'typescript',
+    files: {
+      'script.ts': `// Your TypeScript code goes here
+
+console.log('Hello, World!');`
+    }
+  },
+  {
+    id: 'blank-css',
+    name: 'Blank CSS (.css)',
+    description: 'Empty CSS stylesheet',
+    icon: '🎨',
+    category: 'html',
+    files: {
+      'style.css': `/* Your CSS styles go here */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}`
+    }
+  },
+  {
+    id: 'blank-json',
+    name: 'Blank JSON (.json)',
+    description: 'Empty JSON data file',
+    icon: '🗃️',
+    category: 'javascript',
+    files: {
+      'data.json': `{
+  "name": "My Data",
+  "version": "1.0.0",
+  "data": {
+    
+  }
+}`
+    }
+  }
+];
+
 const TEMPLATES: Template[] = [
   {
     id: 'react-counter',
@@ -535,6 +657,343 @@ export default function TodoApp() {
 </body>
 </html>`
     }
+  },
+  {
+    id: 'ts-calculator',
+    name: 'TypeScript Calculator',
+    description: 'Interactive calculator component with TypeScript',
+    icon: '🧮',
+    category: 'typescript',
+    files: {
+      'Calculator.tsx': `import React, { useState } from 'react';
+
+interface CalculatorProps {}
+
+type Operation = '+' | '-' | '*' | '/' | null;
+
+export default function Calculator(): JSX.Element {
+  const [display, setDisplay] = useState<string>('0');
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<Operation>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState<boolean>(false);
+
+  const inputNumber = (num: string): void => {
+    if (waitingForOperand) {
+      setDisplay(String(num));
+      setWaitingForOperand(false);
+    } else {
+      setDisplay(display === '0' ? String(num) : display + num);
+    }
+  };
+
+  const inputOperation = (nextOperation: Operation): void => {
+    const inputValue: number = parseFloat(display);
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operation) {
+      const currentValue: number = previousValue || 0;
+      const newValue: number = calculate(currentValue, inputValue, operation);
+
+      setDisplay(String(newValue));
+      setPreviousValue(newValue);
+    }
+
+    setWaitingForOperand(true);
+    setOperation(nextOperation);
+  };
+
+  const calculate = (firstValue: number, secondValue: number, operation: Operation): number => {
+    switch (operation) {
+      case '+':
+        return firstValue + secondValue;
+      case '-':
+        return firstValue - secondValue;
+      case '*':
+        return firstValue * secondValue;
+      case '/':
+        return firstValue / secondValue;
+      default:
+        return secondValue;
+    }
+  };
+
+  const performCalculation = (): void => {
+    const inputValue: number = parseFloat(display);
+
+    if (previousValue !== null && operation) {
+      const newValue: number = calculate(previousValue, inputValue, operation);
+      
+      setDisplay(String(newValue));
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForOperand(true);
+    }
+  };
+
+  const clearAll = (): void => {
+    setDisplay('0');
+    setPreviousValue(null);
+    setOperation(null);
+    setWaitingForOperand(false);
+  };
+
+  const clearDisplay = (): void => {
+    setDisplay('0');
+  };
+
+  const inputDecimal = (): void => {
+    if (waitingForOperand) {
+      setDisplay('0.');
+      setWaitingForOperand(false);
+    } else if (display.indexOf('.') === -1) {
+      setDisplay(display + '.');
+    }
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    flex: 1,
+    height: '60px',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    borderRadius: '8px',
+    margin: '2px'
+  };
+
+  const numberButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#f0f0f0',
+    color: '#333'
+  };
+
+  const operatorButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#007acc',
+    color: 'white'
+  };
+
+  const equalsButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#28a745',
+    color: 'white'
+  };
+
+  const clearButtonStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#dc3545',
+    color: 'white'
+  };
+
+  return (
+    <div style={{
+      maxWidth: '320px',
+      margin: '40px auto',
+      padding: '20px',
+      backgroundColor: 'white',
+      borderRadius: '15px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <h2 style={{ 
+        textAlign: 'center', 
+        marginBottom: '20px',
+        color: '#333',
+        fontSize: '24px'
+      }}>
+        TypeScript Calculator
+      </h2>
+      
+      <div style={{
+        width: '100%',
+        height: '60px',
+        fontSize: '24px',
+        textAlign: 'right',
+        padding: '0 15px',
+        marginBottom: '15px',
+        border: '2px solid #ddd',
+        borderRadius: '8px',
+        backgroundColor: '#f8f9fa',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        fontWeight: 'bold',
+        color: '#333'
+      }}>
+        {display}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+        <button 
+          style={clearButtonStyle} 
+          onClick={clearAll}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          AC
+        </button>
+        <button 
+          style={clearButtonStyle} 
+          onClick={clearDisplay}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          C
+        </button>
+        <button 
+          style={operatorButtonStyle} 
+          onClick={() => inputOperation('/')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          ÷
+        </button>
+        <button 
+          style={operatorButtonStyle} 
+          onClick={() => inputOperation('*')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          ×
+        </button>
+
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('7')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          7
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('8')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          8
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('9')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          9
+        </button>
+        <button 
+          style={operatorButtonStyle} 
+          onClick={() => inputOperation('-')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          -
+        </button>
+
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('4')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          4
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('5')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          5
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('6')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          6
+        </button>
+        <button 
+          style={operatorButtonStyle} 
+          onClick={() => inputOperation('+')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          +
+        </button>
+
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('1')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          1
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('2')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          2
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={() => inputNumber('3')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          3
+        </button>
+        <button 
+          style={equalsButtonStyle}
+          onClick={performCalculation}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          =
+        </button>
+
+        <button 
+          style={{...numberButtonStyle, gridColumn: 'span 2'}} 
+          onClick={() => inputNumber('0')}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          0
+        </button>
+        <button 
+          style={numberButtonStyle} 
+          onClick={inputDecimal}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          .
+        </button>
+      </div>
+
+      <div style={{
+        marginTop: '20px',
+        padding: '15px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        fontSize: '12px',
+        color: '#666'
+      }}>
+        <strong>TypeScript Features:</strong>
+        <br />• Type annotations for all variables and functions
+        <br />• Interface definitions for props and state
+        <br />• Strict type checking for mathematical operations
+        <br />• JSX.Element return type specification
+      </div>
+    </div>
+  );
+}`
+    }
   }
 ];
 
@@ -549,13 +1008,17 @@ export default function TemplateSelector({ isOpen, onClose, onSelectTemplate }: 
 
   const categories = [
     { id: 'all', label: 'All Templates' },
+    { id: 'blank', label: '📄 Blank Files' },
     { id: 'react', label: 'React' },
     { id: 'html', label: 'HTML/CSS' },
     { id: 'javascript', label: 'JavaScript' },
+    { id: 'typescript', label: 'TypeScript' },
   ];
 
-  const filteredTemplates = TEMPLATES.filter(template => 
-    selectedCategory === 'all' || template.category === selectedCategory
+  const allTemplates = selectedCategory === 'blank' ? BLANK_TEMPLATES : [...BLANK_TEMPLATES, ...TEMPLATES];
+  
+  const filteredTemplates = allTemplates.filter(template => 
+    selectedCategory === 'all' || selectedCategory === 'blank' || template.category === selectedCategory
   );
 
   if (!isOpen) return null;

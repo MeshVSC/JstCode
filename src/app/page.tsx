@@ -10,12 +10,14 @@ import PDFExporter from '@/components/PDFExporter';
 import FileTree from '@/components/FileTree';
 import FileTabs from '@/components/FileTabs';
 import MenuBar from '@/components/MenuBar';
+import TemplateSelector, { Template } from '@/components/TemplateSelector';
 import { useFileTree } from '@/hooks/useFileTree';
 import { getFileTypeInfo } from '@/types/project';
 
 export default function Home() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'split' | 'editor' | 'preview'>('split');
+  const [showNewFileTemplates, setShowNewFileTemplates] = useState(false);
   const {
     fileTree,
     isHydrated,
@@ -154,6 +156,14 @@ export default function Home() {
     deleteFile(fileId);
   };
 
+  const handleNewFileTemplate = (template: Template) => {
+    // Add the template's files to the project
+    Object.entries(template.files).forEach(([filename, content]) => {
+      addFile(filename, content);
+    });
+    setShowNewFileTemplates(false);
+  };
+
   return (
     <div className="h-screen flex bg-[#1e1e1e] text-white">
       {/* Menu Bar */}
@@ -164,7 +174,18 @@ export default function Home() {
         {/* Header */}
         <div className="h-9 bg-[#2d2d30] flex items-center justify-between px-3 border-b border-[#3e3e42]">
           <span className="text-xs font-medium text-[#cccccc] uppercase tracking-wide">Explorer</span>
-          <Image src="/logoicon_W.png" alt="JstCode" width={24} height={24} className="opacity-90" style={{ width: 'auto', height: 'auto' }} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowNewFileTemplates(true)}
+              className="w-6 h-6 flex items-center justify-center text-[#cccccc] hover:text-white hover:bg-[#3e3e42] rounded transition-colors"
+              title="New File"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <Image src="/logoicon_W.png" alt="JstCode" width={24} height={24} className="opacity-80" />
+          </div>
         </div>
         
         {/* File Tree */}
@@ -289,6 +310,13 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* New File Template Selector */}
+      <TemplateSelector
+        isOpen={showNewFileTemplates}
+        onClose={() => setShowNewFileTemplates(false)}
+        onSelectTemplate={handleNewFileTemplate}
+      />
     </div>
   );
 }

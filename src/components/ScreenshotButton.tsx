@@ -59,7 +59,7 @@ export default function ScreenshotButton({ className = '' }: ScreenshotButtonPro
         w-8 h-8 flex items-center justify-center rounded transition-colors
         ${isCapturing 
           ? 'bg-[#3e3e42] text-[#858585] cursor-not-allowed'
-          : 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white'
+          : 'hover:bg-[#3e3e42] text-[#858585] hover:text-[#cccccc]'
         }
         ${className}
       `}

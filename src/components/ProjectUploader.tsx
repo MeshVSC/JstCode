@@ -134,7 +134,10 @@ export default function ProjectUploader({ onProjectUpload, onShowTemplates }: Pr
               </p>
               {onShowTemplates && (
                 <button
-                  onClick={onShowTemplates}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowTemplates();
+                  }}
                   className="px-4 py-2 bg-[#007acc] hover:bg-[#0086d3] text-white text-sm rounded transition-colors"
                 >
                   <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">

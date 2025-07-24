@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Sandpack } from '@codesandbox/sandpack-react';
 import ErrorBoundary from './ErrorBoundary';
 import ConsolePanel from './ConsolePanel';
@@ -15,6 +15,7 @@ interface LivePreviewProps {
 
 export default function LivePreview({ code, filename, allFiles }: LivePreviewProps) {
   const { messages, clearMessages, handleSandpackMessage } = useConsoleCapture();
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   // Listen for console messages from Sandpack
   useEffect(() => {
@@ -32,7 +33,15 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
 
   const isReactFile = (filename: string) => {
     const ext = getFileExtension(filename);
-    return ext === 'tsx' || ext === 'jsx';
+    // Allow TSX/JSX for React components, and TS files that contain React code
+    if (ext === 'tsx' || ext === 'jsx') {
+      return true;
+    }
+    // For .ts files, check if they contain React-like code
+    if (ext === 'ts') {
+      return code.includes('React') || code.includes('JSX') || code.includes('<') || code.includes('export default function');
+    }
+    return false;
   };
 
   const isHtmlFile = (filename: string) => {
@@ -56,6 +65,58 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
           processedContent = processedContent.replace(/@\/utils\//g, '/src/utils/');
           // Replace @/types/ with /src/types/
           processedContent = processedContent.replace(/@\/types\//g, '/src/types/');
+        }
+        
+        // Fix HTML comments to JSX comments
+        if (processedContent.includes('<!--')) {
+          processedContent = processedContent.replace(/<!--\s*(.*?)\s*-->/g, '{/* $1 */}');
+        }
+        
+        // Fix CSS in style tags
+        if (processedContent.includes('<style>')) {
+          processedContent = processedContent.replace(
+            /(<style>\s*)([\s\S]*?)(\s*<\/style>)/g,
+            (match, openTag, cssContent, closeTag) => {
+              return `${openTag}{\`${cssContent}\`}${closeTag}`;
+            }
+          );
+        }
+        
+        // Fix common Cloud Desktop export issues
+        if (processedContent.includes('export default function') && !processedContent.includes('import React')) {
+          processedContent = `import React from 'react';\n\n${processedContent}`;
+        }
+        
+        // Fix HTML-style inline styles to JSX style objects
+        if (processedContent.includes('style="')) {
+          processedContent = processedContent.replace(/style="([^"]+)"/g, (match, styleString) => {
+            // Convert CSS string to JSX style object
+            const styleObj = styleString
+              .split(';')
+              .filter(prop => prop.trim())
+              .map(prop => {
+                const [key, value] = prop.split(':').map(s => s.trim());
+                if (!key || !value) return '';
+                // Convert kebab-case to camelCase
+                const camelKey = key.replace(/-([a-z])/g, (match, letter) => letter.toUpperCase());
+                return `${camelKey}: '${value}'`;
+              })
+              .filter(prop => prop)
+              .join(', ');
+            
+            return `style={{${styleObj}}}`;
+          });
+        }
+        
+        // Fix missing component wrapper for raw SVG
+        if (processedContent.includes('<svg') && !processedContent.includes('export default function') && !processedContent.includes('function ')) {
+          processedContent = `import React from 'react';
+
+export default function Component() {
+  return (
+    ${processedContent}
+  );
+}`;
         }
         
         // Fix routing: Convert BrowserRouter to HashRouter for compatibility
@@ -103,6 +164,65 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
           active: true,
         },
       };
+
+  // Fix CSS-in-JSX and HTML comment issues from Cloud Desktop for single files too
+  if (files['/App.tsx']) {
+    let code = files['/App.tsx'].code;
+    
+    // Fix CSS in style tags
+    if (code.includes('<style>')) {
+      code = code.replace(
+        /(<style>\s*)([\s\S]*?)(\s*<\/style>)/g,
+        (match, openTag, cssContent, closeTag) => {
+          return `${openTag}{\`${cssContent}\`}${closeTag}`;
+        }
+      );
+    }
+    
+    // Fix HTML comments to JSX comments
+    if (code.includes('<!--')) {
+      code = code.replace(/<!--\s*(.*?)\s*-->/g, '{/* $1 */}');
+    }
+    
+    // Fix common Cloud Desktop export issues
+    if (code.includes('export default function') && !code.includes('import React')) {
+      code = `import React from 'react';\n\n${code}`;
+    }
+    
+    // Fix HTML-style inline styles to JSX style objects
+    if (code.includes('style="')) {
+      code = code.replace(/style="([^"]+)"/g, (match, styleString) => {
+        // Convert CSS string to JSX style object
+        const styleObj = styleString
+          .split(';')
+          .filter(prop => prop.trim())
+          .map(prop => {
+            const [key, value] = prop.split(':').map(s => s.trim());
+            if (!key || !value) return '';
+            // Convert kebab-case to camelCase
+            const camelKey = key.replace(/-([a-z])/g, (match, letter) => letter.toUpperCase());
+            return `${camelKey}: '${value}'`;
+          })
+          .filter(prop => prop)
+          .join(', ');
+        
+        return `style={{${styleObj}}}`;
+      });
+    }
+    
+    // Fix missing component wrapper for raw SVG
+    if (code.includes('<svg') && !code.includes('export default function') && !code.includes('function ')) {
+      code = `import React from 'react';
+
+export default function Component() {
+  return (
+    ${code}
+  );
+}`;
+    }
+    
+    files['/App.tsx'].code = code;
+  }
 
   // Add package.json with common dependencies and error logging
   files['/package.json'] = {
@@ -184,7 +304,7 @@ window.addEventListener('unhandledrejection', (e) => {
 ` + files['/src/main.tsx'].code;
   }
 
-  const template = isTypeScriptFile(filename) ? 'react-ts' : 'react';
+  const template = (isTypeScriptFile(filename) || getFileExtension(filename) === 'ts') ? 'react-ts' : 'react';
   
   // Debug: log actual code being rendered
   console.log('Actual code being rendered:', code);
@@ -252,29 +372,90 @@ window.addEventListener('unhandledrejection', (e) => {
     };
 
     return (
-      <div className="h-full w-full">
-        <iframe
-          srcDoc={createMultiPageHtml()}
-          className="w-full h-full border-none"
-          title="HTML Preview"
-          sandbox="allow-scripts allow-same-origin"
-        />
+      <div className="h-full w-full flex flex-col">
+        {/* Preview Header */}
+        <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
+          <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
+          <span className="text-xs text-[#606060]">{filename}</span>
+        </div>
+        
+        <div className="flex-1 relative">
+          <div style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left', width: `${10000 / zoomLevel}%`, height: `${10000 / zoomLevel}%` }}>
+          <iframe
+            srcDoc={createMultiPageHtml()}
+            className="w-full h-full border-none"
+            title="HTML Preview"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </div>
+        
+        {/* Zoom Controls */}
+        <div className="absolute top-4 right-4 flex gap-1 z-10">
+          <button
+            onClick={handleZoomOut}
+            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            title="Zoom Out"
+            disabled={zoomLevel <= 50}
+          >
+            −
+          </button>
+          <div className="bg-[#3e3e42] text-white rounded px-2 py-1 text-xs flex items-center min-w-[50px] justify-center">
+            {zoomLevel}%
+          </div>
+          <button
+            onClick={handleZoomIn}
+            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            title="Zoom In"
+            disabled={zoomLevel >= 200}
+          >
+            +
+          </button>
+          <button
+            onClick={handleZoomReset}
+            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-xs transition-colors"
+            title="Reset Zoom"
+          >
+            1:1
+          </button>
+        </div>
+        </div>
       </div>
     );
   }
 
   // Check if this is a React file that can be previewed
   if (!isReactFile(filename)) {
+    // Special message for .ts files that don't contain React code
+    const ext = getFileExtension(filename);
+    const isPlainTypeScript = ext === 'ts' && !code.includes('React') && !code.includes('<');
+    
     return (
-      <div className="h-full w-full flex items-center justify-center bg-gray-50">
-        <div className="text-center text-gray-500">
-          <div className="text-4xl mb-2">
-            <svg className="w-10 h-10 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-            </svg>
+      <div className="h-full w-full flex flex-col">
+        {/* Preview Header */}
+        <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
+          <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
+          <span className="text-xs text-[#606060]">{filename}</span>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center text-gray-500">
+            <div className="text-4xl mb-2">
+              <svg className="w-10 h-10 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            {isPlainTypeScript ? (
+              <>
+                <p>Plain TypeScript files (.ts) cannot be previewed.</p>
+                <p className="text-sm mt-2">Try using a React TypeScript component (.tsx) instead.</p>
+              </>
+            ) : (
+              <>
+                <p>Live preview is available for React files (.tsx, .jsx) and HTML files (.html, .htm)</p>
+                <p className="text-sm mt-2">Current file: {filename}</p>
+              </>
+            )}
           </div>
-          <p>Live preview is available for React files (.tsx, .jsx) and HTML files (.html, .htm)</p>
-          <p className="text-sm mt-2">Current file: {filename}</p>
         </div>
       </div>
     );
@@ -282,15 +463,23 @@ window.addEventListener('unhandledrejection', (e) => {
 
   if (!code.trim()) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-gray-50">
-        <div className="text-center text-gray-500">
-          <div className="text-4xl mb-2">
-            <svg className="w-10 h-10 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-            </svg>
+      <div className="h-full w-full flex flex-col">
+        {/* Preview Header */}
+        <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
+          <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
+          <span className="text-xs text-[#606060]">{filename}</span>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center text-gray-500">
+            <div className="text-4xl mb-2">
+              <svg className="w-10 h-10 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <p>Upload a TSX, JSX, or TS file to see the live preview</p>
           </div>
-          <p>Upload a TSX file to see the live preview</p>
         </div>
       </div>
     );
@@ -318,25 +507,75 @@ window.addEventListener('unhandledrejection', (e) => {
     window.open(`https://codesandbox.io/api/v1/sandboxes/define?parameters=${parameters}`, '_blank');
   };
 
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 25, 200));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 25, 50));
+  };
+
+  const handleZoomReset = () => {
+    setZoomLevel(100);
+  };
+
   return (
     <div className="h-full w-full flex flex-col">
+      {/* Preview Header */}
+      <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
+        <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
+        <span className="text-xs text-[#606060]">{filename}</span>
+      </div>
+      
       {/* Preview Area */}
       <div className="flex-1 relative">
-        <ErrorBoundary>
-          <Sandpack
-            template={template}
-            files={files}
-            options={{
-              showNavigator: false,
-              showTabs: false,
-              editorWidthPercentage: 0,
-              autoReload: true,
-              recompileMode: 'delayed',
-              recompileDelay: 1000,
-            }}
-            theme="dark"
-          />
-        </ErrorBoundary>
+        <div style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left', width: `${10000 / zoomLevel}%`, height: `${10000 / zoomLevel}%` }}>
+          <ErrorBoundary>
+            <Sandpack
+              template={template}
+              files={files}
+              options={{
+                showNavigator: false,
+                showTabs: false,
+                editorWidthPercentage: 0,
+                autoReload: true,
+                recompileMode: 'delayed',
+                recompileDelay: 1000,
+              }}
+              theme="dark"
+            />
+          </ErrorBoundary>
+        </div>
+        
+        {/* Zoom Controls */}
+        <div className="absolute top-4 right-4 flex gap-1 z-10">
+          <button
+            onClick={handleZoomOut}
+            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            title="Zoom Out"
+            disabled={zoomLevel <= 50}
+          >
+            −
+          </button>
+          <div className="bg-[#3e3e42] text-white rounded px-2 py-1 text-xs flex items-center min-w-[50px] justify-center">
+            {zoomLevel}%
+          </div>
+          <button
+            onClick={handleZoomIn}
+            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            title="Zoom In"
+            disabled={zoomLevel >= 200}
+          >
+            +
+          </button>
+          <button
+            onClick={handleZoomReset}
+            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-xs transition-colors"
+            title="Reset Zoom"
+          >
+            1:1
+          </button>
+        </div>
         
         <button
           onClick={openInCodeSandbox}

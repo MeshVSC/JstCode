@@ -1,0 +1,6 @@
+{
+  "type": "stdio",
+  "command": "/Users/kira/.local/bin/uvx",
+  "args": ["mcp-server-fetch"],
+  "env": {}
+}
