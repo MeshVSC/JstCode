@@ -2,22 +2,25 @@
 
 import ScreenshotButton from './ScreenshotButton';
 
-export default function MenuBar() {
+interface MenuBarProps {
+  onSettingsClick?: () => void;
+}
+
+export default function MenuBar({ onSettingsClick }: MenuBarProps) {
   const handleSettingsClick = () => {
-    // Settings functionality to be implemented
-    console.log('Settings clicked - not implemented yet');
+    if (onSettingsClick) {
+      onSettingsClick();
+    } else {
+      console.log('Settings clicked - no handler provided');
+    }
   };
 
   return (
-    <div className="w-12 bg-[#2d2d30] border-r border-[#3e3e42] flex flex-col items-center py-2 gap-2">
-      {/* Activity Bar Label */}
-      <div className="text-xs text-[#858585] uppercase tracking-wide font-medium writing-vertical-rl rotate-180 py-2 opacity-50">
-        Activity
-      </div>
+    <div className="w-12 activity-bar flex flex-col items-center py-2 gap-2" style={{borderRight: '1px solid var(--surface-border)'}}>
       {/* Settings Icon */}
       <button
         onClick={handleSettingsClick}
-        className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#3e3e42] transition-colors text-[#858585] hover:text-[#cccccc]"
+        className="w-8 h-8 icon-btn"
         title="Settings"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

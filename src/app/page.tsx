@@ -11,6 +11,8 @@ import FileTree from '@/components/FileTree';
 import FileTabs from '@/components/FileTabs';
 import MenuBar from '@/components/MenuBar';
 import TemplateSelector, { Template } from '@/components/TemplateSelector';
+import SettingsPanel, { useEditorSettings } from '@/components/SettingsPanel';
+import PasteDetector from '@/components/PasteDetector';
 import { useFileTree } from '@/hooks/useFileTree';
 import { getFileTypeInfo } from '@/types/project';
 
@@ -18,6 +20,8 @@ export default function Home() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'split' | 'editor' | 'preview'>('split');
   const [showNewFileTemplates, setShowNewFileTemplates] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const { settings, updateSettings } = useEditorSettings();
   const {
     fileTree,
     isHydrated,
@@ -79,17 +83,17 @@ export default function Home() {
       }
     };
 
-    const processEntry = async (entry: any, files: Record<string, string>, path = '') => {
+    const processEntry = async (entry: FileSystemEntry, files: Record<string, string>, path = '') => {
       if (entry.isFile) {
-        const file = await new Promise<File>((resolve) => entry.file(resolve));
+        const file = await new Promise<File>((resolve) => (entry as FileSystemFileEntry).file(resolve));
         if (isCodeFile(file.name)) {
           const content = await file.text();
           const fullPath = path ? `${path}/${file.name}` : file.name;
           files[fullPath] = content;
         }
       } else if (entry.isDirectory) {
-        const reader = entry.createReader();
-        const entries = await new Promise<any[]>((resolve) => reader.readEntries(resolve));
+        const reader = (entry as FileSystemDirectoryEntry).createReader();
+        const entries = await new Promise<FileSystemEntry[]>((resolve) => reader.readEntries(resolve));
         
         for (const childEntry of entries) {
           const newPath = path ? `${path}/${entry.name}` : entry.name;
@@ -165,26 +169,26 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex bg-[#1e1e1e] text-white">
+    <div className="app-container">
       {/* Menu Bar */}
-      <MenuBar />
+      <MenuBar onSettingsClick={() => setShowSettings(true)} />
       
       {/* Sidebar */}
-      <div className="w-64 bg-[#252526] border-r border-[#2d2d30] flex flex-col">
+      <div className="w-64 sidebar flex flex-col">
         {/* Header */}
-        <div className="h-9 bg-[#2d2d30] flex items-center justify-between px-3 border-b border-[#3e3e42]">
-          <span className="text-xs font-medium text-[#cccccc] uppercase tracking-wide">Explorer</span>
+        <div className="sidebar-header flex items-center justify-between px-3">
+          <span className="text-xs font-medium text-primary uppercase tracking-wide">Explorer</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowNewFileTemplates(true)}
-              className="w-6 h-6 flex items-center justify-center text-[#cccccc] hover:text-white hover:bg-[#3e3e42] rounded transition-colors"
+              className="w-6 h-6 icon-btn"
               title="New File"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                 <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </button>
-            <Image src="/logoicon_W.png" alt="JstCode" width={24} height={24} className="opacity-80" />
+            <Image src="/logoicon_W.png" alt="JstCode" width={40} height={40} className="opacity-90" style={{filter: 'var(--logo-filter, none)'}} />
           </div>
         </div>
         
@@ -192,16 +196,36 @@ export default function Home() {
         <div className="flex-1 overflow-auto">
           {!isHydrated ? (
             <div className="text-center py-8 px-2">
-              <div className="text-[#858585] text-xs mb-4">Loading...</div>
+              <div className="text-muted text-xs mb-4">Loading...</div>
             </div>
           ) : !hasFiles ? (
-            <div className="text-center py-8 px-2">
-              <div className="text-[#858585] text-xs mb-4">No files uploaded</div>
-              <FileUploader 
-                onFileUpload={handleFileUpload}
-                onProjectUpload={handleProjectUpload}
-                mode="project"
-              />
+            <div className="py-4 px-2">
+              <div className="text-center mb-6">
+                <div className="text-muted text-xs mb-4">No files uploaded</div>
+                <FileUploader 
+                  onFileUpload={handleFileUpload}
+                  onProjectUpload={handleProjectUpload}
+                  mode="project"
+                />
+              </div>
+              
+              <div className="border-t border-default pt-6">
+                <div className="text-xs text-muted mb-3 text-center">Or paste code directly:</div>
+                <PasteDetector 
+                  onCodePasted={(code, analysis) => {
+                    // Create a filename based on detected language
+                    const ext = analysis?.language === 'typescript-react' ? '.tsx' :
+                                analysis?.language === 'javascript-react' ? '.jsx' :
+                                analysis?.language === 'typescript' ? '.ts' :
+                                analysis?.language === 'html' ? '.html' :
+                                analysis?.language === 'css' ? '.css' : '.js';
+                    
+                    const filename = `pasted-code${ext}`;
+                    handleFileUpload(code, filename);
+                  }}
+                  onApplyTemplate={handleNewFileTemplate}
+                />
+              </div>
             </div>
           ) : (
             <FileTree
@@ -215,7 +239,7 @@ export default function Home() {
         
         {/* Bottom Actions */}
         {hasFiles && (
-          <div className="border-t border-[#3e3e42] p-2">
+          <div className="p-2" style={{background: 'var(--surface-elevated)', backdropFilter: 'blur(5px)'}}>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <PDFExporter 
@@ -224,13 +248,13 @@ export default function Home() {
                 />
                 <button
                   onClick={clearProject}
-                  className="px-3 py-1 text-xs bg-[#3e3e42] hover:bg-[#4e4e52] text-[#cccccc] rounded transition-colors"
+                  className="btn btn-sm"
                   title="Clear all files"
                 >
                   Clear
                 </button>
               </div>
-              <div className="text-xs text-[#606060]">
+              <div className="text-xs text-muted">
                 {(() => {
                   const size = getProjectSize();
                   return `${size.files} files • ${size.sizeKB}KB`;
@@ -239,10 +263,15 @@ export default function Home() {
             </div>
           </div>
         )}
+        
+        {/* Sidebar Footer with Logo */}
+        <div className="mt-auto p-4 flex items-center justify-center" style={{background: 'var(--surface-elevated)', backdropFilter: 'blur(5px)'}}>
+          <Image src="/all_W.png" alt="JstCode" width={80} height={80} className="opacity-40 hover:opacity-60 transition-opacity" style={{filter: 'var(--logo-filter, none)'}} />
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Tab Bar */}
         <FileTabs
           openTabs={fileTree.openTabs}
@@ -256,7 +285,7 @@ export default function Home() {
 
         {/* Editor and Preview */}
         {activeFile ? (
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-0 overflow-hidden">
             {layoutMode === 'editor' ? (
               // Editor Only
               <CodeEditor
@@ -276,8 +305,8 @@ export default function Home() {
               </div>
             ) : (
               // Split View
-              <PanelGroup direction="horizontal" className="h-full">
-                <Panel defaultSize={50} minSize={30}>
+              <PanelGroup direction="horizontal" className="h-full w-full max-w-full overflow-hidden">
+                <Panel defaultSize={50} minSize={30} maxSize={70}>
                   <CodeEditor
                     value={activeFile.content || ''}
                     onChange={handleCodeChange}
@@ -286,10 +315,10 @@ export default function Home() {
                   />
                 </Panel>
                 
-                <PanelResizeHandle className="w-px bg-[#3e3e42] hover:bg-[#4e4e52] transition-colors" />
+                <PanelResizeHandle className="resize-handle" />
                 
-                <Panel defaultSize={50} minSize={30}>
-                  <div className="h-full" ref={previewRef}>
+                <Panel defaultSize={50} minSize={30} maxSize={70}>
+                  <div className="h-full w-full max-w-full overflow-hidden" ref={previewRef}>
                     <LivePreview 
                       code={activeFile.content || ''} 
                       filename={activeFile.name}
@@ -301,11 +330,11 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-[#161617]">
-            <div className="text-center text-[#858585]">
-              <Image src="/all_G.png" alt="JstCode" width={192} height={192} priority className="mx-auto mb-6" style={{ width: 'auto', height: 'auto' }} />
-              <div className="text-lg mb-2">Welcome to JstCode</div>
-              <div className="text-sm">Upload a file from the Explorer to get started</div>
+          <div className="welcome-state flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Image src="/blocks_W.png" alt="Upload" width={120} height={120} priority className="mx-auto mb-6 opacity-60" style={{ width: 'auto', height: 'auto', filter: 'brightness(2) contrast(1.2)' }} />
+              <div className="welcome-title text-lg mb-2 font-semibold">Welcome to JstCode</div>
+              <div className="text-sm text-secondary">Upload a file from the Explorer to get started</div>
             </div>
           </div>
         )}
@@ -316,6 +345,14 @@ export default function Home() {
         isOpen={showNewFileTemplates}
         onClose={() => setShowNewFileTemplates(false)}
         onSelectTemplate={handleNewFileTemplate}
+      />
+
+      {/* Settings Panel */}
+      <SettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onSettingsChange={updateSettings}
       />
     </div>
   );

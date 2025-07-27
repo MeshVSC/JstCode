@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
 import { FileNode } from '@/types/project';
 import EditorToolbar from './EditorToolbar';
 import SettingsPanel, { useEditorSettings } from './SettingsPanel';
+import { useTheme } from '@/contexts/ThemeContext';
 import PackageManager, { Package } from './PackageManager';
 
 interface CodeEditorProps {
@@ -22,8 +23,74 @@ export default function CodeEditor({
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const { settings, updateSettings } = useEditorSettings();
+  const { currentTheme } = useTheme();
+  
+  // Auto-detect editor theme based on app theme
+  const editorTheme = currentTheme === 'clean-light' ? 'jstcode-light' : 'jstcode-dark';
   const [showSettings, setShowSettings] = useState(false);
   const [showPackages, setShowPackages] = useState(false);
+  
+  // Update Monaco themes when app theme changes
+  useEffect(() => {
+    if (editorRef.current) {
+      updateMonacoThemes();
+    }
+  }, [currentTheme]);
+  
+  const updateMonacoThemes = () => {
+    if (!editorRef.current) return;
+    
+    const monaco = (window as any).monaco;
+    if (!monaco) return;
+    
+    // Function to get current CSS variable values
+    const getCSSVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    
+    // Re-define themes with current CSS variables
+    monaco.editor.defineTheme('jstcode-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': getCSSVar('--surface-elevated') || '#161B22',
+        'editor.foreground': getCSSVar('--text-primary') || '#E6EDF3',
+        'editor.lineHighlightBackground': getCSSVar('--surface-hover') || '#262C36',
+        'editor.selectionBackground': (getCSSVar('--primary') || '#007ACC') + '40',
+        'editorLineNumber.foreground': getCSSVar('--text-muted') || '#656D76',
+        'editorLineNumber.activeForeground': getCSSVar('--text-secondary') || '#7D8590',
+        'editorWidget.background': getCSSVar('--surface-elevated') || '#161B22',
+        'editorWidget.border': getCSSVar('--surface-border') || '#30363D',
+        'input.background': getCSSVar('--surface-input') || '#30363D',
+        'input.border': getCSSVar('--surface-border') || '#30363D',
+        'dropdown.background': getCSSVar('--surface-elevated') || '#161B22',
+        'dropdown.border': getCSSVar('--surface-border') || '#30363D',
+      }
+    });
+
+    monaco.editor.defineTheme('jstcode-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': getCSSVar('--surface-elevated') || '#F8F9FA',
+        'editor.foreground': getCSSVar('--text-primary') || '#212529',
+        'editor.lineHighlightBackground': getCSSVar('--surface-hover') || '#E9ECEF',
+        'editor.selectionBackground': (getCSSVar('--primary') || '#0969DA') + '40',
+        'editorLineNumber.foreground': getCSSVar('--text-muted') || '#ADB5BD',
+        'editorLineNumber.activeForeground': getCSSVar('--text-secondary') || '#6C757D',
+        'editorWidget.background': getCSSVar('--surface-elevated') || '#F8F9FA',
+        'editorWidget.border': getCSSVar('--surface-border') || '#DEE2E6',
+        'input.background': getCSSVar('--surface-input') || '#FFFFFF',
+        'input.border': getCSSVar('--surface-border') || '#DEE2E6',
+        'dropdown.background': getCSSVar('--surface-elevated') || '#F8F9FA',
+        'dropdown.border': getCSSVar('--surface-border') || '#DEE2E6',
+      }
+    });
+    
+    // Apply the correct theme
+    const newTheme = currentTheme === 'clean-light' ? 'jstcode-light' : 'jstcode-dark';
+    monaco.editor.setTheme(newTheme);
+  };
   
   const handleChange = (newValue: string | undefined) => {
     onChange(newValue || '');
@@ -176,6 +243,9 @@ export default function CodeEditor({
       },
     });
 
+    // Initialize themes
+    updateMonacoThemes();
+
     // Add keyboard shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       const toolbar = document.querySelector('[data-format-button]') as HTMLButtonElement;
@@ -200,7 +270,7 @@ export default function CodeEditor({
         onCodeChange={onChange}
         minimapEnabled={settings.minimap}
         onToggleMinimap={() => updateSettings({ ...settings, minimap: !settings.minimap })}
-        onShowSettings={() => setShowSettings(true)}
+        // onShowSettings={() => setShowSettings(true)} // Removed redundant settings button
         onShowPackages={() => setShowPackages(true)}
       />
       
@@ -211,7 +281,7 @@ export default function CodeEditor({
           value={value}
           onChange={handleChange}
           onMount={handleEditorDidMount}
-          theme={settings.theme}
+          theme={editorTheme}
           options={{
             minimap: { enabled: settings.minimap },
             scrollBeyondLastLine: false,

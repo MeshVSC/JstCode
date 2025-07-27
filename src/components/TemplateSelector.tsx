@@ -1032,9 +1032,9 @@ export default function TemplateSelector({ isOpen, onClose, onSelectTemplate }: 
       />
       
       {/* Template Selector Modal */}
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-[#2d2d30] border border-[#3e3e42] rounded-lg shadow-xl w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-elevated border border-default rounded-lg shadow-xl w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#3e3e42]">
+        <div className="flex items-center justify-between p-4 border-b border-default">
           <h2 className="text-lg font-semibold text-[#cccccc]">🚀 Choose a Template</h2>
           <button
             onClick={onClose}
@@ -1045,7 +1045,7 @@ export default function TemplateSelector({ isOpen, onClose, onSelectTemplate }: 
         </div>
 
         {/* Category Filter */}
-        <div className="p-4 border-b border-[#3e3e42]">
+        <div className="p-4 border-b border-default">
           <div className="flex gap-2 overflow-x-auto">
             {categories.map(category => (
               <button
@@ -1069,7 +1069,7 @@ export default function TemplateSelector({ isOpen, onClose, onSelectTemplate }: 
             {filteredTemplates.map(template => (
               <div
                 key={template.id}
-                className="p-4 bg-[#252526] border border-[#3e3e42] rounded-lg hover:bg-[#2a2d2e] transition-colors cursor-pointer"
+                className="p-4 bg-surface border border-default rounded-lg hover:bg-hover transition-colors cursor-pointer"
                 onClick={() => onSelectTemplate(template)}
               >
                 <div className="flex items-start gap-3">
@@ -1093,7 +1093,7 @@ export default function TemplateSelector({ isOpen, onClose, onSelectTemplate }: 
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#3e3e42] text-xs text-[#858585]">
+        <div className="p-4 border-t border-default text-xs text-muted">
           💡 Click a template to start coding immediately with a working example
         </div>
       </div>

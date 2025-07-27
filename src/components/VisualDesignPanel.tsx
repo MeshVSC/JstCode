@@ -132,9 +132,9 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
               type="number"
               value={numericValue}
               onChange={(e) => handleStyleChange(prop.property, e.target.value, prop.unit)}
-              className="w-16 px-2 py-1 text-xs bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc]"
+              className="w-16 px-2 py-1 text-xs bg-elevated border border-default rounded text-primary"
             />
-            {prop.unit && <span className="text-xs text-[#858585]">{prop.unit}</span>}
+            {prop.unit && <span className="text-xs text-muted">{prop.unit}</span>}
           </div>
         );
       
@@ -143,7 +143,7 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
           <select
             value={currentValue}
             onChange={(e) => handleStyleChange(prop.property, e.target.value)}
-            className="w-full px-2 py-1 text-xs bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc]"
+            className="w-full px-2 py-1 text-xs bg-elevated border border-default rounded text-primary"
           >
             {prop.options?.map(option => (
               <option key={option} value={option}>{option}</option>
@@ -160,7 +160,7 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
               type="color"
               value={currentValue}
               onChange={(e) => handleStyleChange(prop.property, e.target.value)}
-              className="w-8 h-6 border border-[#464647] rounded"
+              className="w-8 h-6 border border-default rounded"
             />
             <input
               id={`color-text-${prop.property}`}
@@ -168,7 +168,7 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
               type="text"
               value={currentValue}
               onChange={(e) => handleStyleChange(prop.property, e.target.value)}
-              className="flex-1 px-2 py-1 text-xs bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc] font-mono"
+              className="flex-1 px-2 py-1 text-xs bg-elevated border border-default rounded text-primary font-mono"
             />
           </div>
         );
@@ -181,7 +181,7 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
             type="text"
             value={currentValue}
             onChange={(e) => handleStyleChange(prop.property, e.target.value)}
-            className="w-full px-2 py-1 text-xs bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc]"
+            className="w-full px-2 py-1 text-xs bg-elevated border border-default rounded text-primary"
           />
         );
     }
@@ -190,13 +190,13 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
   if (!isOpen) return null;
 
   return (
-    <div className="w-80 bg-[#252526] border-l border-[#3e3e42] flex flex-col h-full">
+    <div className="w-80 bg-elevated border-l border-default flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-[#3e3e42]">
-        <h2 className="text-sm font-semibold text-[#cccccc]">🎨 Style Inspector</h2>
+      <div className="flex items-center justify-between p-3 border-b border-default">
+        <h2 className="text-sm font-semibold text-primary">🎨 Style Inspector</h2>
         <button
           onClick={onClose}
-          className="text-[#858585] hover:text-[#cccccc] text-lg"
+          className="text-muted hover:text-primary text-lg"
         >
           ×
         </button>
@@ -204,9 +204,9 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
 
       {/* Selected Element Info */}
       {selectedElement && (
-        <div className="p-3 border-b border-[#3e3e42] bg-[#2d2d30]">
-          <div className="text-xs text-[#858585]">Selected Element</div>
-          <div className="text-sm text-[#cccccc] font-mono">
+        <div className="p-3 border-b border-default bg-sidebar">
+          <div className="text-xs text-muted">Selected Element</div>
+          <div className="text-sm text-primary font-mono">
             &lt;{selectedElement.tagName}
             {selectedElement.className && (
               <span className="text-[#4fc1ff]"> className=&quot;{selectedElement.className}&quot;</span>
@@ -217,15 +217,15 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
       )}
 
       {/* Category Tabs */}
-      <div className="flex overflow-x-auto border-b border-[#3e3e42]">
+      <div className="flex overflow-x-auto border-b border-default">
         {Object.entries(STYLE_CATEGORIES).map(([key, category]) => (
           <button
             key={key}
             onClick={() => setActiveCategory(key)}
             className={`px-3 py-2 text-xs whitespace-nowrap transition-colors border-b-2 ${
               activeCategory === key
-                ? 'border-[#007acc] text-[#cccccc] bg-[#2d2d30]'
-                : 'border-transparent text-[#858585] hover:text-[#cccccc]'
+                ? 'border-primary text-primary bg-sidebar'
+                : 'border-transparent text-muted hover:text-primary'
             }`}
           >
             {category.title}
@@ -238,7 +238,7 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
         <div className="space-y-4">
           {STYLE_CATEGORIES[activeCategory as keyof typeof STYLE_CATEGORIES]?.properties.map((prop) => (
             <div key={prop.property}>
-              <label className="block text-xs font-medium text-[#cccccc] mb-2">
+              <label className="block text-xs font-medium text-primary mb-2">
                 {prop.property.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </label>
               {renderPropertyInput(prop)}
@@ -248,7 +248,7 @@ export default function VisualDesignPanel({ isOpen, onClose, onStyleChange }: Vi
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-[#3e3e42] text-xs text-[#858585]">
+      <div className="p-3 border-t border-default text-xs text-muted">
         <svg className="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
         </svg>

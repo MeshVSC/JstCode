@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ThemeType } from '@/types/theme';
 
 export interface EditorSettings {
+  // Appearance
+  appTheme: ThemeType;
+  
   // Editor
-  theme: 'vs-dark' | 'light';
+  editorTheme: 'vs-dark' | 'light';
   fontSize: number;
   tabSize: number;
   lineNumbers: 'on' | 'off';
@@ -25,8 +30,11 @@ export interface EditorSettings {
 }
 
 const defaultSettings: EditorSettings = {
+  // Appearance
+  appTheme: 'professional-dark',
+  
   // Editor
-  theme: 'vs-dark',
+  editorTheme: 'vs-dark',
   fontSize: 14,
   tabSize: 2,
   lineNumbers: 'on',
@@ -55,11 +63,17 @@ interface SettingsPanelProps {
 
 export default function SettingsPanel({ isOpen, onClose, settings, onSettingsChange }: SettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<EditorSettings>(settings);
-  const [activeTab, setActiveTab] = useState<'editor' | 'behavior' | 'advanced' | 'storage'>('editor');
+  const [activeTab, setActiveTab] = useState<'appearance' | 'editor' | 'storage'>('editor');
+  const { currentTheme, setTheme, availableThemes } = useTheme();
+  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(currentTheme);
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+
+  useEffect(() => {
+    setSelectedTheme(currentTheme);
+  }, [currentTheme]);
 
   useEffect(() => {
     console.log('SettingsPanel isOpen:', isOpen);
@@ -72,6 +86,15 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
     const newSettings = { ...localSettings, [key]: value };
     setLocalSettings(newSettings);
     onSettingsChange(newSettings);
+  };
+
+  const handleThemeSelect = (themeId: ThemeType) => {
+    setSelectedTheme(themeId);
+  };
+
+  const handleThemeApply = () => {
+    setTheme(selectedTheme);
+    handleSettingChange('appTheme', selectedTheme);
   };
 
   const resetToDefaults = () => {
@@ -90,34 +113,36 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
       />
       
       {/* Settings Panel */}
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-[#2d2d30] border border-[#3e3e42] rounded-lg shadow-xl w-96 max-h-[80vh] overflow-auto">
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 panel w-96 max-h-[80vh] overflow-auto shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#3e3e42]">
-          <h2 className="text-lg font-semibold text-[#cccccc]">Settings</h2>
+        <div className="panel-header flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-primary">Settings</h2>
           <button
             onClick={onClose}
-            className="text-[#858585] hover:text-[#cccccc] text-xl"
+            className="text-muted hover:text-primary text-xl"
           >
             ×
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#3e3e42]">
+        <div className="flex border-b" style={{borderColor: 'var(--surface-border)'}}>
           {[
-            { key: 'editor', label: 'Editor', title: 'Editor Settings' },
-            { key: 'behavior', label: 'Behavior', title: 'Workflow & Behavior' },
-            { key: 'advanced', label: 'Advanced', title: 'Advanced Features' },
+            { key: 'editor', label: 'Editor', title: 'Editor & Development Settings' },
             { key: 'storage', label: 'Storage', title: 'Storage & Cache' },
+            { key: 'appearance', label: 'Appearance', title: 'Theme & Visual Settings' },
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as 'editor' | 'behavior' | 'advanced' | 'storage')}
+              onClick={() => setActiveTab(tab.key as 'appearance' | 'editor' | 'storage')}
               className={`flex-1 px-3 py-2 text-xs transition-colors border-b-2 ${
                 activeTab === tab.key
-                  ? 'border-[#007acc] text-[#cccccc] bg-[#2a2d2e]'
-                  : 'border-transparent text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]'
+                  ? 'text-primary bg-hover'
+                  : 'border-transparent text-muted hover:text-primary hover:bg-hover'
               }`}
+              style={{
+                borderBottomColor: activeTab === tab.key ? 'var(--primary)' : 'transparent'
+              }}
               title={tab.title}
             >
               {tab.label}
@@ -127,26 +152,100 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
         {/* Settings Content */}
         <div className="p-4">
+          {activeTab === 'appearance' && (
+            <div className="space-y-6">
+              {/* App Theme */}
+              <div>
+                <label className="block text-sm font-medium text-primary mb-3">
+                  App Theme
+                </label>
+                <div className="grid grid-cols-1 gap-3">
+                  {availableThemes.map((theme) => (
+                    <div
+                      key={theme.id}
+                      className={`
+                        p-4 rounded-lg cursor-pointer transition-all border-2
+                        ${selectedTheme === theme.id 
+                          ? 'border-primary bg-hover shadow-md' 
+                          : 'border-transparent bg-elevated hover:bg-hover hover:shadow-sm'
+                        }
+                      `}
+                      onClick={() => handleThemeSelect(theme.id)}
+                      style={{
+                        borderColor: selectedTheme === theme.id ? 'var(--primary)' : 'var(--surface-border)',
+                        background: currentTheme === theme.id ? 'var(--surface-hover)' : 'var(--surface-elevated)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-primary">{theme.name}</h3>
+                        {selectedTheme === theme.id && (
+                          <div 
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs"
+                            style={{background: 'var(--primary)'}}
+                          >
+                            ✓
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-secondary mb-3">{theme.description}</p>
+                      
+                      {/* Theme Preview */}
+                      <div 
+                        className="h-12 rounded-md flex overflow-hidden"
+                        style={{background: theme.colors.surfaceBg}}
+                      >
+                        <div 
+                          className="flex-1 flex items-center px-2"
+                          style={{background: theme.colors.surfaceSidebar}}
+                        >
+                          <div 
+                            className="w-2 h-2 rounded-full mr-2"
+                            style={{background: theme.colors.primary}}
+                          ></div>
+                          <div className="text-xs" style={{color: theme.colors.textSecondary}}>
+                            Files
+                          </div>
+                        </div>
+                        <div 
+                          className="flex-2 flex items-center px-2"
+                          style={{background: theme.colors.surfaceElevated}}
+                        >
+                          <div className="text-xs" style={{color: theme.colors.textPrimary}}>
+                            Editor
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Apply Theme Button */}
+                {selectedTheme !== currentTheme && (
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={handleThemeApply}
+                      className="btn btn-primary btn-sm"
+                    >
+                      Apply Theme
+                    </button>
+                    <button
+                      onClick={() => setSelectedTheme(currentTheme)}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'editor' && (
             <div className="space-y-4">
-              {/* Theme */}
-              <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
-                  Theme
-                </label>
-                <select
-                  value={localSettings.theme}
-                  onChange={(e) => handleSettingChange('theme', e.target.value as 'vs-dark' | 'light')}
-                  className="w-full px-3 py-2 bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc] text-sm focus:outline-none focus:border-[#007acc]"
-                >
-                  <option value="vs-dark">Dark</option>
-                  <option value="light">Light</option>
-                </select>
-              </div>
 
               {/* Font Size */}
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
+                <label className="block text-sm font-medium text-primary mb-2">
                   Font Size: {localSettings.fontSize}px
                 </label>
                 <input
@@ -161,13 +260,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Tab Size */}
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
+                <label className="block text-sm font-medium text-primary mb-2">
                   Tab Size
                 </label>
                 <select
                   value={localSettings.tabSize}
                   onChange={(e) => handleSettingChange('tabSize', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc] text-sm focus:outline-none focus:border-[#007acc]"
+                  className="input"
                 >
                   <option value={2}>2 spaces</option>
                   <option value={4}>4 spaces</option>
@@ -177,15 +276,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Line Numbers */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Line Numbers
                 </label>
                 <button
                   onClick={() => handleSettingChange('lineNumbers', localSettings.lineNumbers === 'on' ? 'off' : 'on')}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.lineNumbers === 'on'
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.lineNumbers === 'on' ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.lineNumbers === 'on' ? 'On' : 'Off'}
@@ -194,15 +291,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Word Wrap */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Word Wrap
                 </label>
                 <button
                   onClick={() => handleSettingChange('wordWrap', localSettings.wordWrap === 'on' ? 'off' : 'on')}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.wordWrap === 'on'
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.wordWrap === 'on' ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.wordWrap === 'on' ? 'On' : 'Off'}
@@ -211,36 +306,28 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Minimap */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Minimap
                 </label>
                 <button
                   onClick={() => handleSettingChange('minimap', !localSettings.minimap)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.minimap
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.minimap ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.minimap ? 'On' : 'Off'}
                 </button>
               </div>
-            </div>
-          )}
 
-          {activeTab === 'behavior' && (
-            <div className="space-y-4">
               {/* Format on Save */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Format on Save
                 </label>
                 <button
                   onClick={() => handleSettingChange('formatOnSave', !localSettings.formatOnSave)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.formatOnSave
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.formatOnSave ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.formatOnSave ? 'On' : 'Off'}
@@ -249,15 +336,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Auto Save */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Auto Save
                 </label>
                 <button
                   onClick={() => handleSettingChange('autoSave', !localSettings.autoSave)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.autoSave
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.autoSave ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.autoSave ? 'On' : 'Off'}
@@ -266,16 +351,14 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Default Layout */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Default Layout
                 </label>
                 <div className="flex gap-1">
                   <button
                     onClick={() => handleSettingChange('defaultLayout', 'editor')}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      localSettings.defaultLayout === 'editor'
-                        ? 'bg-[#007acc] text-white'
-                        : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                    className={`btn btn-sm ${
+                      localSettings.defaultLayout === 'editor' ? 'btn-primary' : 'btn-secondary'
                     }`}
                     title="Editor Only"
                   >
@@ -286,10 +369,8 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
                   </button>
                   <button
                     onClick={() => handleSettingChange('defaultLayout', 'split')}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      localSettings.defaultLayout === 'split'
-                        ? 'bg-[#007acc] text-white'
-                        : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                    className={`btn btn-sm ${
+                      localSettings.defaultLayout === 'split' ? 'btn-primary' : 'btn-secondary'
                     }`}
                     title="Split View"
                   >
@@ -300,10 +381,8 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
                   </button>
                   <button
                     onClick={() => handleSettingChange('defaultLayout', 'preview')}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      localSettings.defaultLayout === 'preview'
-                        ? 'bg-[#007acc] text-white'
-                        : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                    className={`btn btn-sm ${
+                      localSettings.defaultLayout === 'preview' ? 'btn-primary' : 'btn-secondary'
                     }`}
                     title="Preview Only"
                   >
@@ -317,15 +396,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Console Clear */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Auto-clear Console
                 </label>
                 <button
                   onClick={() => handleSettingChange('consoleClear', !localSettings.consoleClear)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.consoleClear
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.consoleClear ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.consoleClear ? 'On' : 'Off'}
@@ -334,36 +411,28 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Error Highlight */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Error Highlighting
                 </label>
                 <button
                   onClick={() => handleSettingChange('errorHighlight', !localSettings.errorHighlight)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.errorHighlight
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.errorHighlight ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.errorHighlight ? 'On' : 'Off'}
                 </button>
               </div>
-            </div>
-          )}
 
-          {activeTab === 'advanced' && (
-            <div className="space-y-4">
               {/* Strict Mode */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   TypeScript Strict Mode
                 </label>
                 <button
                   onClick={() => handleSettingChange('strictMode', !localSettings.strictMode)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.strictMode
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.strictMode ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.strictMode ? 'On' : 'Off'}
@@ -372,15 +441,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Import Suggestions */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Import Suggestions
                 </label>
                 <button
                   onClick={() => handleSettingChange('importSuggestions', !localSettings.importSuggestions)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.importSuggestions
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.importSuggestions ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.importSuggestions ? 'On' : 'Off'}
@@ -389,15 +456,13 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Hot Reload */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#cccccc]">
+                <label className="text-sm font-medium text-primary">
                   Hot Reload
                 </label>
                 <button
                   onClick={() => handleSettingChange('hotReload', !localSettings.hotReload)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    localSettings.hotReload
-                      ? 'bg-[#007acc] text-white'
-                      : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                  className={`btn btn-sm ${
+                    localSettings.hotReload ? 'btn-primary' : 'btn-secondary'
                   }`}
                 >
                   {localSettings.hotReload ? 'On' : 'Off'}
@@ -406,11 +471,12 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
             </div>
           )}
 
+
           {activeTab === 'storage' && (
             <div className="space-y-4">
               {/* Clear Cache */}
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
+                <label className="block text-sm font-medium text-primary mb-2">
                   Cache Management
                 </label>
                 <button
@@ -418,7 +484,7 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
                     localStorage.clear();
                     window.location.reload();
                   }}
-                  className="w-full px-3 py-2 bg-[#d73a49] hover:bg-[#cb2431] text-white rounded transition-colors text-sm"
+                  className="btn btn-sm w-full bg-error text-on-accent hover:bg-error/80"
                 >
                   Clear All Cache & Reload
                 </button>
@@ -426,7 +492,7 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Export Settings */}
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
+                <label className="block text-sm font-medium text-primary mb-2">
                   Export Settings
                 </label>
                 <button
@@ -438,7 +504,7 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
                     a.download = 'jstcode-settings.json';
                     a.click();
                   }}
-                  className="w-full px-3 py-2 bg-[#3e3e42] hover:bg-[#4e4e52] text-[#cccccc] rounded transition-colors text-sm"
+                  className="btn btn-secondary btn-sm w-full"
                 >
                   Download Settings JSON
                 </button>
@@ -446,12 +512,12 @@ export default function SettingsPanel({ isOpen, onClose, settings, onSettingsCha
 
               {/* Reset */}
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
+                <label className="block text-sm font-medium text-primary mb-2">
                   Reset to Defaults
                 </label>
                 <button
                   onClick={resetToDefaults}
-                  className="w-full px-3 py-2 bg-[#f85149] hover:bg-[#da3633] text-white rounded transition-colors text-sm"
+                  className="btn btn-sm w-full bg-error text-on-accent hover:bg-error/80"
                 >
                   Reset All Settings
                 </button>

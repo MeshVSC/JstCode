@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSCode V1 Design Mockup</title>
+    <style>
+        /* Design System Variables */
+        :root {
+            /* Brand Colors */
+            --jst-primary: #007ACC;
+            --jst-primary-dark: #005A9F;
+            --jst-accent: #FF6B35;
+            --jst-success: #3FB950;
+            --jst-warning: #D29922;
+            --jst-error: #F85149;
+            
+            /* Dark Theme */
+            --surface-bg: #0D1117;
+            --surface-elevated: #161B22;
+            --surface-sidebar: #21262D;
+            --surface-input: #30363D;
+            --surface-border: #30363D;
+            --surface-hover: #262C36;
+            --surface-active: #30363D;
+            
+            --text-primary: #E6EDF3;
+            --text-secondary: #7D8590;
+            --text-muted: #656D76;
+            --text-accent: #58A6FF;
+            
+            /* Typography */
+            --font-primary: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Fira Code', monospace;
+            
+            /* Spacing */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-6: 24px;
+            --space-8: 32px;
+            
+            /* Effects */
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--surface-bg);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout Structure */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: var(--surface-bg);
+        }
+
+        /* Menu Bar */
+        .menu-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: var(--surface-elevated);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-4);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .menu-items {
+            display: flex;
+            gap: var(--space-6);
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .menu-item {
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .menu-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--surface-sidebar);
+            display: flex;
+            flex-direction: column;
+            margin-top: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            height: 40px;
+            background: rgba(22, 27, 34, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-4);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .icon-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+
+        .icon-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .logo-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+            filter: brightness(1.2);
+        }
+
+        /* File Tree */
+        .file-tree {
+            flex: 1;
+            padding: var(--space-2);
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .file-item:hover {
+            background: var(--surface-hover);
+            transform: translateX(2px);
+        }
+
+        .file-item.active {
+            background: var(--jst-primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .file-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: var(--space-2);
+            opacity: 0.7;
+        }
+
+        /* Bottom Panel */
+        .sidebar-bottom {
+            padding: var(--space-4);
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+
+        .btn {
+            padding: var(--space-2) var(--space-3);
+            background: var(--surface-elevated);
+            color: var(--text-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn:hover {
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary {
+            background: var(--jst-primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--jst-primary-dark);
+            box-shadow: 0 4px 12px rgba(0, 122, 204, 0.4);
+        }
+
+        .project-stats {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 40px;
+            background: var(--surface-bg);
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            height: 40px;
+            background: rgba(22, 27, 34, 0.95);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-2);
+            overflow-x: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-4);
+            height: 36px;
+            background: transparent;
+            margin-right: var(--space-1);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 13px;
+            position: relative;
+            min-width: 120px;
+            border-radius: var(--radius-md);
+        }
+
+        .tab:hover {
+            background: var(--surface-hover);
+        }
+
+        .tab.active {
+            background: var(--surface-bg);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: var(--jst-primary);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--jst-primary);
+        }
+
+        .tab-close {
+            margin-left: var(--space-2);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all var(--transition);
+        }
+
+        .tab-close:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .layout-controls {
+            margin-left: auto;
+            display: flex;
+            gap: var(--space-1);
+            padding-right: var(--space-4);
+        }
+
+        .layout-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layout-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .layout-btn.active {
+            background: var(--jst-primary);
+            color: white;
+        }
+
+        /* Editor Area */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            background: var(--surface-bg);
+            position: relative;
+        }
+
+        .editor-panel {
+            flex: 1;
+            background: var(--surface-bg);
+            position: relative;
+        }
+
+        .editor-header {
+            height: 32px;
+            background: rgba(13, 17, 23, 0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-4);
+            font-size: 12px;
+            color: var(--text-secondary);
+            backdrop-filter: blur(5px);
+        }
+
+        .code-editor {
+            height: calc(100% - 32px);
+            background: var(--surface-bg);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.6;
+            padding: var(--space-4);
+            color: var(--text-primary);
+            overflow: auto;
+        }
+
+        .syntax-keyword { color: #FF7B72; }
+        .syntax-string { color: #A5D6FF; }
+        .syntax-comment { color: #8B949E; }
+        .syntax-function { color: #D2A8FF; }
+
+        /* Preview Panel */
+        .preview-panel {
+            flex: 1;
+            background: var(--surface-elevated);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            height: 32px;
+            background: rgba(13, 17, 23, 0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-4);
+            font-size: 12px;
+            color: var(--text-secondary);
+            backdrop-filter: blur(5px);
+        }
+
+        .preview-content {
+            flex: 1;
+            background: white;
+            margin: var(--space-4);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        /* Resize Handle */
+        .resize-handle {
+            width: 6px;
+            background: transparent;
+            cursor: col-resize;
+            position: relative;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resize-handle:hover {
+            background: rgba(0, 122, 204, 0.1);
+        }
+
+        .resize-handle::after {
+            content: '';
+            width: 2px;
+            height: 40px;
+            background: var(--text-muted);
+            border-radius: 2px;
+            opacity: 0.3;
+            transition: all var(--transition);
+        }
+
+        .resize-handle:hover::after {
+            background: var(--jst-primary);
+            opacity: 1;
+            box-shadow: 0 0 8px var(--jst-primary);
+        }
+
+        /* Welcome State */
+        .welcome-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-bg);
+            text-align: center;
+        }
+
+        .welcome-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: var(--space-6);
+            opacity: 0.6;
+            filter: brightness(1.2);
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            background: linear-gradient(135deg, var(--jst-primary) 0%, var(--jst-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-8);
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: var(--space-4);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px;
+            opacity: 0.5;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-items">
+                <div class="menu-item">File</div>
+                <div class="menu-item">Edit</div>
+                <div class="menu-item">View</div>
+                <div class="menu-item">Go</div>
+                <div class="menu-item">Run</div>
+                <div class="menu-item">Terminal</div>
+                <div class="menu-item">Help</div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Explorer</div>
+                <div class="sidebar-actions">
+                    <button class="icon-btn" title="New File">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                            <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <img src="/logoicon_W.png" alt="JSCode" class="logo-icon" />
+                </div>
+            </div>
+
+            <div class="file-tree">
+                <div class="file-item">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M1.75 1A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25v-8.5A1.75 1.75 0 0014.25 3H7.5L6.25 1.75A.75.75 0 005.75 1H1.75z"/>
+                    </svg>
+                    src
+                </div>
+                <div class="file-item active" style="margin-left: 20px;">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0113.25 16h-9.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 00.25-.25V6h-2.75A1.75 1.75 0 019 4.25V1.5H3.75z"/>
+                    </svg>
+                    App.tsx
+                </div>
+                <div class="file-item" style="margin-left: 20px;">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0113.25 16h-9.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 00.25-.25V6h-2.75A1.75 1.75 0 019 4.25V1.5H3.75z"/>
+                    </svg>
+                    globals.css
+                </div>
+                <div class="file-item" style="margin-left: 20px;">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0113.25 16h-9.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 00.25-.25V6h-2.75A1.75 1.75 0 019 4.25V1.5H3.75z"/>
+                    </svg>
+                    index.html
+                </div>
+                <div class="file-item">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M1.75 1A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25v-8.5A1.75 1.75 0 0014.25 3H7.5L6.25 1.75A.75.75 0 005.75 1H1.75z"/>
+                    </svg>
+                    components
+                </div>
+                <div class="file-item">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0113.25 16h-9.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 00.25-.25V6h-2.75A1.75 1.75 0 019 4.25V1.5H3.75z"/>
+                    </svg>
+                    package.json
+                </div>
+                <div class="file-item">
+                    <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0113.25 16h-9.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 00.25-.25V6h-2.75A1.75 1.75 0 019 4.25V1.5H3.75z"/>
+                    </svg>
+                    README.md
+                </div>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="action-buttons">
+                    <button class="btn btn-primary">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Export PDF
+                    </button>
+                    <button class="btn">Clear</button>
+                </div>
+                <div class="project-stats">
+                    <span>8 files</span>
+                    <span>47KB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Tab Bar -->
+            <div class="tab-bar">
+                <div class="tab active">
+                    <span>App.tsx</span>
+                    <div class="tab-close">×</div>
+                </div>
+                <div class="tab">
+                    <span>globals.css</span>
+                    <div class="tab-close">×</div>
+                </div>
+                <div class="tab">
+                    <span>index.html</span>
+                    <div class="tab-close">×</div>
+                </div>
+
+                <div class="layout-controls">
+                    <button class="layout-btn" title="Editor Only">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" fill="none"/>
+                        </svg>
+                    </button>
+                    <button class="layout-btn active" title="Split View">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <rect x="2" y="3" width="5" height="10" rx="1" stroke="currentColor" fill="none"/>
+                            <rect x="9" y="3" width="5" height="10" rx="1" stroke="currentColor" fill="none"/>
+                        </svg>
+                    </button>
+                    <button class="layout-btn" title="Preview Only">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <rect x="2" y="3" width="12" height="10" rx="1" stroke="currentColor" fill="none"/>
+                            <circle cx="8" cy="8" r="2" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="editor-area">
+                <!-- Code Editor -->
+                <div class="editor-panel">
+                    <div class="editor-header">
+                        <span>src/App.tsx</span>
+                    </div>
+                    <div class="code-editor">
+<span class="syntax-keyword">import</span> <span class="syntax-string">React</span> <span class="syntax-keyword">from</span> <span class="syntax-string">'react'</span>;
+<span class="syntax-keyword">import</span> <span class="syntax-string">'./App.css'</span>;
+
+<span class="syntax-keyword">function</span> <span class="syntax-function">App</span>() {
+  <span class="syntax-keyword">return</span> (
+    &lt;<span class="syntax-keyword">div</span> <span class="syntax-string">className</span>=<span class="syntax-string">"App"</span>&gt;
+      &lt;<span class="syntax-keyword">header</span> <span class="syntax-string">className</span>=<span class="syntax-string">"App-header"</span>&gt;
+        &lt;<span class="syntax-keyword">h1</span>&gt;Welcome to JSCode&lt;/<span class="syntax-keyword">h1</span>&gt;
+        &lt;<span class="syntax-keyword">p</span>&gt;
+          Modern web development made simple
+        &lt;/<span class="syntax-keyword">p</span>&gt;
+        &lt;<span class="syntax-keyword">button</span> <span class="syntax-string">className</span>=<span class="syntax-string">"primary-button"</span>&gt;
+          Get Started
+        &lt;/<span class="syntax-keyword">button</span>&gt;
+      &lt;/<span class="syntax-keyword">header</span>&gt;
+    &lt;/<span class="syntax-keyword">div</span>&gt;
+  );
+}
+
+<span class="syntax-keyword">export</span> <span class="syntax-keyword">default</span> <span class="syntax-function">App</span>;
+                    </div>
+                </div>
+
+                <!-- Resize Handle -->
+                <div class="resize-handle"></div>
+
+                <!-- Preview Panel -->
+                <div class="preview-panel">
+                    <div class="preview-header">
+                        <span>Live Preview</span>
+                    </div>
+                    <div class="preview-content">
+                        <div style="padding: 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                            <h1 style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: 600;">Welcome to JSCode</h1>
+                            <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9;">Modern web development made simple</p>
+                            <button style="padding: 12px 24px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px);">Get Started</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

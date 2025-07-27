@@ -147,20 +147,20 @@ export default function PackageManager({ isOpen, onClose, onAddPackage }: Packag
       />
       
       {/* Package Manager Modal */}
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-[#2d2d30] border border-[#3e3e42] rounded-lg shadow-xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-elevated border border-default rounded-lg shadow-xl w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#3e3e42]">
-          <h2 className="text-lg font-semibold text-[#cccccc]">📦 Add Package</h2>
+        <div className="flex items-center justify-between p-4 border-b border-default">
+          <h2 className="text-lg font-semibold text-primary">📦 Add Package</h2>
           <button
             onClick={onClose}
-            className="text-[#858585] hover:text-[#cccccc] text-xl"
+            className="text-muted hover:text-primary text-xl"
           >
             ×
           </button>
         </div>
 
         {/* Search & Filters */}
-        <div className="p-4 border-b border-[#3e3e42]">
+        <div className="p-4 border-b border-default">
           <div className="relative mb-3">
             <input
               id="package-search"
@@ -169,11 +169,11 @@ export default function PackageManager({ isOpen, onClose, onAddPackage }: Packag
               placeholder="Search packages... (e.g., 'react-router', 'axios')"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full px-3 py-2 bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc] text-sm focus:outline-none focus:border-[#007acc]"
+              className="w-full px-3 py-2 bg-surface border border-default rounded text-primary text-sm focus:outline-none focus:border-primary"
             />
             {isSearching && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#007acc] border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
               </div>
             )}
           </div>
@@ -185,8 +185,8 @@ export default function PackageManager({ isOpen, onClose, onAddPackage }: Packag
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-3 py-1 text-xs rounded whitespace-nowrap transition-colors ${
                   selectedCategory === category.id
-                    ? 'bg-[#007acc] text-white'
-                    : 'bg-[#3e3e42] text-[#cccccc] hover:bg-[#4e4e52]'
+                    ? 'bg-primary text-on-accent'
+                    : 'bg-elevated text-primary hover:bg-hover'
                 }`}
               >
                 {category.label}
@@ -198,7 +198,7 @@ export default function PackageManager({ isOpen, onClose, onAddPackage }: Packag
         {/* Package List */}
         <div className="flex-1 overflow-auto p-4">
           {displayPackages.length === 0 ? (
-            <div className="text-center text-[#858585] py-8">
+            <div className="text-center text-muted py-8">
               {searchQuery.length > 2 ? 'No packages found' : 'Start typing to search NPM packages'}
             </div>
           ) : (
@@ -206,27 +206,27 @@ export default function PackageManager({ isOpen, onClose, onAddPackage }: Packag
               {displayPackages.map((pkg, index) => (
                 <div
                   key={`${pkg.name}-${index}`}
-                  className="p-3 bg-[#252526] border border-[#3e3e42] rounded hover:bg-[#2a2d2e] transition-colors"
+                  className="p-3 bg-surface border border-default rounded hover:bg-hover transition-colors">
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-[#cccccc]">{pkg.name}</h3>
-                        <span className="text-xs text-[#858585] bg-[#3e3e42] px-2 py-0.5 rounded">
+                        <h3 className="font-medium text-primary">{pkg.name}</h3>
+                        <span className="text-xs text-muted bg-elevated px-2 py-0.5 rounded">
                           {pkg.version}
                         </span>
-                        <span className="text-xs text-[#007acc] bg-[#007acc20] px-2 py-0.5 rounded">
+                        <span className="text-xs text-primary bg-primary/20 px-2 py-0.5 rounded">
                           {pkg.category}
                         </span>
                       </div>
-                      <p className="text-sm text-[#858585] mb-2">{pkg.description}</p>
-                      <div className="text-xs text-[#858585] font-mono bg-[#1e1e1e] p-2 rounded">
+                      <p className="text-sm text-secondary mb-2">{pkg.description}</p>
+                      <div className="text-xs text-muted font-mono bg-surface p-2 rounded">
                         {pkg.imports[0]}
                       </div>
                     </div>
                     <button
                       onClick={() => handleAddPackage(pkg)}
-                      className="ml-3 px-3 py-1 bg-[#007acc] hover:bg-[#0086d3] text-white text-sm rounded transition-colors"
+                      className="ml-3 px-3 py-1 bg-primary hover:bg-primary/80 text-on-accent text-sm rounded transition-colors">
                     >
                       Add
                     </button>
@@ -238,7 +238,7 @@ export default function PackageManager({ isOpen, onClose, onAddPackage }: Packag
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#3e3e42] text-xs text-[#858585]">
+        <div className="p-4 border-t border-default text-xs text-muted">
           <svg className="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>

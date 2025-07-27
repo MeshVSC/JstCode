@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,12 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JstCode - Just Code",
   description: "A professional multi-file React code editor with live preview",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://jstcode.com'),
   icons: {
     icon: "/icon_B.png",
     apple: "/icon_B.png",
   },
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -52,6 +53,12 @@ export const metadata: Metadata = {
   },
 };
 
+export function generateViewport() {
+  return {
+    themeColor: "#0D1117",
+  };
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -62,7 +69,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

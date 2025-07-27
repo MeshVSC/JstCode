@@ -6,6 +6,7 @@ import ErrorBoundary from './ErrorBoundary';
 import ConsolePanel from './ConsolePanel';
 import CustomPreview from './CustomPreview';
 import { useConsoleCapture } from '@/hooks/useConsoleCapture';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface LivePreviewProps {
   code: string;
@@ -15,7 +16,11 @@ interface LivePreviewProps {
 
 export default function LivePreview({ code, filename, allFiles }: LivePreviewProps) {
   const { messages, clearMessages, handleSandpackMessage } = useConsoleCapture();
+  const { currentTheme } = useTheme();
   const [zoomLevel, setZoomLevel] = useState(100);
+  
+  // Determine Sandpack theme based on app theme
+  const sandpackTheme = currentTheme === 'clean-light' ? 'light' : 'dark';
 
   // Listen for console messages from Sandpack
   useEffect(() => {
@@ -224,60 +229,62 @@ export default function Component() {
     files['/App.tsx'].code = code;
   }
 
-  // Add package.json with common dependencies and error logging
+  // Detect additional dependencies from import statements
+  const detectDependencies = (allFileContents: Record<string, string>) => {
+    const baseDeps = {
+      react: '^18.0.0',
+      'react-dom': '^18.0.0',
+      '@types/react': '^18.0.0',
+      '@types/react-dom': '^18.0.0'
+    };
+    
+    const detectedDeps: Record<string, string> = { ...baseDeps };
+    
+    // Common dependency patterns
+    const depPatterns: Record<string, string> = {
+      'react-youtube': '^10.1.0',
+      'lucide-react': '^0.263.1', 
+      'react-router-dom': '^6.8.0',
+      'clsx': '^2.0.0',
+      'tailwindcss': '^3.3.0',
+      'framer-motion': '^10.16.0',
+      'recharts': '^2.8.0',
+      'react-hook-form': '^7.47.0',
+      'zod': '^3.22.4',
+      'date-fns': '^2.30.0',
+      '@radix-ui/react-dialog': '^1.0.5',
+      '@radix-ui/react-dropdown-menu': '^2.0.6',
+      '@radix-ui/react-toast': '^1.1.5',
+      'sonner': '^1.4.0',
+      'react-resizable-panels': '^0.0.55',
+      'next-themes': '^0.2.1'
+    };
+    
+    // Scan all files for import statements
+    Object.values(allFileContents).forEach(content => {
+      Object.keys(depPatterns).forEach(pkg => {
+        const patterns = [
+          new RegExp(`import.*from\\s+['"]${pkg}['"]`, 'g'),
+          new RegExp(`import\\s+['"]${pkg}['"]`, 'g'),
+          new RegExp(`require\\(['"]${pkg}['"]\\)`, 'g')
+        ];
+        
+        if (patterns.some(pattern => pattern.test(content))) {
+          detectedDeps[pkg] = depPatterns[pkg];
+        }
+      });
+    });
+    
+    return detectedDeps;
+  };
+
+  const allFileContents = allFiles && Object.keys(allFiles).length > 1 ? allFiles : { [filename]: code };
+  const dependencies = detectDependencies(allFileContents);
+
+  // Add package.json with dynamically detected dependencies
   files['/package.json'] = {
     code: JSON.stringify({
-      dependencies: {
-        react: '^18.0.0',
-        'react-dom': '^18.0.0',
-        'lucide-react': '^0.263.1',
-        'react-router-dom': '^6.8.0',
-        '@types/react': '^18.0.0',
-        '@types/react-dom': '^18.0.0',
-        'clsx': '^2.0.0',
-        'tailwindcss': '^3.3.0',
-        'class-variance-authority': '^0.7.0',
-        '@radix-ui/react-toast': '^1.1.5',
-        '@radix-ui/react-dialog': '^1.0.5',
-        '@radix-ui/react-dropdown-menu': '^2.0.6',
-        '@radix-ui/react-navigation-menu': '^1.1.4',
-        '@radix-ui/react-accordion': '^1.1.2',
-        '@radix-ui/react-alert-dialog': '^1.0.5',
-        '@radix-ui/react-aspect-ratio': '^1.0.3',
-        '@radix-ui/react-avatar': '^1.0.4',
-        '@radix-ui/react-checkbox': '^1.0.4',
-        '@radix-ui/react-collapsible': '^1.0.3',
-        '@radix-ui/react-context-menu': '^2.1.5',
-        '@radix-ui/react-hover-card': '^1.0.7',
-        '@radix-ui/react-label': '^2.0.2',
-        '@radix-ui/react-menubar': '^1.0.4',
-        '@radix-ui/react-popover': '^1.0.7',
-        '@radix-ui/react-progress': '^1.0.3',
-        '@radix-ui/react-radio-group': '^1.1.3',
-        '@radix-ui/react-scroll-area': '^1.0.5',
-        '@radix-ui/react-select': '^2.0.0',
-        '@radix-ui/react-separator': '^1.0.3',
-        '@radix-ui/react-slider': '^1.1.2',
-        '@radix-ui/react-switch': '^1.0.3',
-        '@radix-ui/react-tabs': '^1.0.4',
-        '@radix-ui/react-toggle': '^1.0.3',
-        '@radix-ui/react-toggle-group': '^1.0.4',
-        '@radix-ui/react-tooltip': '^1.0.7',
-        'sonner': '^1.4.0',
-        'vaul': '^0.9.0',
-        'cmdk': '^0.2.0',
-        'react-day-picker': '^8.10.0',
-        'date-fns': '^2.30.0',
-        'recharts': '^2.8.0',
-        'react-hook-form': '^7.47.0',
-        '@hookform/resolvers': '^3.3.2',
-        'zod': '^3.22.4',
-        'embla-carousel-react': '^8.0.0',
-        'react-resizable-panels': '^0.0.55',
-        'input-otp': '^1.2.4',
-        'next-themes': '^0.2.1',
-        'framer-motion': '^10.16.0'
-      }
+      dependencies
     }, null, 2)
   };
 
@@ -374,9 +381,9 @@ window.addEventListener('unhandledrejection', (e) => {
     return (
       <div className="h-full w-full flex flex-col">
         {/* Preview Header */}
-        <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
-          <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
-          <span className="text-xs text-[#606060]">{filename}</span>
+        <div className="h-8 bg-elevated border-b border-default flex items-center justify-between px-3">
+          <span className="text-xs text-muted uppercase tracking-wide font-medium">Preview</span>
+          <span className="text-xs text-secondary">{filename}</span>
         </div>
         
         <div className="flex-1 relative">
@@ -393,18 +400,18 @@ window.addEventListener('unhandledrejection', (e) => {
         <div className="absolute top-4 right-4 flex gap-1 z-10">
           <button
             onClick={handleZoomOut}
-            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            className="w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded flex items-center justify-center text-sm transition-colors"
             title="Zoom Out"
             disabled={zoomLevel <= 50}
           >
             −
           </button>
-          <div className="bg-[#3e3e42] text-white rounded px-2 py-1 text-xs flex items-center min-w-[50px] justify-center">
+          <div className="bg-elevated text-on-accent rounded px-2 py-1 text-xs flex items-center min-w-[50px] justify-center">
             {zoomLevel}%
           </div>
           <button
             onClick={handleZoomIn}
-            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            className="w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded flex items-center justify-center text-sm transition-colors"
             title="Zoom In"
             disabled={zoomLevel >= 200}
           >
@@ -412,7 +419,7 @@ window.addEventListener('unhandledrejection', (e) => {
           </button>
           <button
             onClick={handleZoomReset}
-            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-xs transition-colors"
+            className="w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded flex items-center justify-center text-xs transition-colors"
             title="Reset Zoom"
           >
             1:1
@@ -432,15 +439,15 @@ window.addEventListener('unhandledrejection', (e) => {
     return (
       <div className="h-full w-full flex flex-col">
         {/* Preview Header */}
-        <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
-          <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
-          <span className="text-xs text-[#606060]">{filename}</span>
+        <div className="h-8 bg-elevated border-b border-default flex items-center justify-between px-3">
+          <span className="text-xs text-muted uppercase tracking-wide font-medium">Preview</span>
+          <span className="text-xs text-secondary">{filename}</span>
         </div>
         
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center text-gray-500">
+        <div className="flex-1 flex items-center justify-center bg-surface">
+          <div className="text-center text-muted">
             <div className="text-4xl mb-2">
-              <svg className="w-10 h-10 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-10 h-10 mx-auto text-muted" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
               </svg>
             </div>
@@ -465,15 +472,15 @@ window.addEventListener('unhandledrejection', (e) => {
     return (
       <div className="h-full w-full flex flex-col">
         {/* Preview Header */}
-        <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
-          <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
-          <span className="text-xs text-[#606060]">{filename}</span>
+        <div className="h-8 bg-elevated border-b border-default flex items-center justify-between px-3">
+          <span className="text-xs text-muted uppercase tracking-wide font-medium">Preview</span>
+          <span className="text-xs text-secondary">{filename}</span>
         </div>
         
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center text-gray-500">
+        <div className="flex-1 flex items-center justify-center bg-surface">
+          <div className="text-center text-muted">
             <div className="text-4xl mb-2">
-              <svg className="w-10 h-10 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-10 h-10 mx-auto text-muted" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                 <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
               </svg>
@@ -522,9 +529,9 @@ window.addEventListener('unhandledrejection', (e) => {
   return (
     <div className="h-full w-full flex flex-col">
       {/* Preview Header */}
-      <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
-        <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Preview</span>
-        <span className="text-xs text-[#606060]">{filename}</span>
+      <div className="h-8 bg-elevated border-b border-default flex items-center justify-between px-3">
+        <span className="text-xs text-muted uppercase tracking-wide font-medium">Preview</span>
+        <span className="text-xs text-secondary">{filename}</span>
       </div>
       
       {/* Preview Area */}
@@ -542,7 +549,7 @@ window.addEventListener('unhandledrejection', (e) => {
                 recompileMode: 'delayed',
                 recompileDelay: 1000,
               }}
-              theme="dark"
+              theme={sandpackTheme}
             />
           </ErrorBoundary>
         </div>
@@ -551,18 +558,18 @@ window.addEventListener('unhandledrejection', (e) => {
         <div className="absolute top-4 right-4 flex gap-1 z-10">
           <button
             onClick={handleZoomOut}
-            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            className="w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded flex items-center justify-center text-sm transition-colors"
             title="Zoom Out"
             disabled={zoomLevel <= 50}
           >
             −
           </button>
-          <div className="bg-[#3e3e42] text-white rounded px-2 py-1 text-xs flex items-center min-w-[50px] justify-center">
+          <div className="bg-elevated text-on-accent rounded px-2 py-1 text-xs flex items-center min-w-[50px] justify-center">
             {zoomLevel}%
           </div>
           <button
             onClick={handleZoomIn}
-            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-sm transition-colors"
+            className="w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded flex items-center justify-center text-sm transition-colors"
             title="Zoom In"
             disabled={zoomLevel >= 200}
           >
@@ -570,7 +577,7 @@ window.addEventListener('unhandledrejection', (e) => {
           </button>
           <button
             onClick={handleZoomReset}
-            className="w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded flex items-center justify-center text-xs transition-colors"
+            className="w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded flex items-center justify-center text-xs transition-colors"
             title="Reset Zoom"
           >
             1:1
@@ -579,7 +586,7 @@ window.addEventListener('unhandledrejection', (e) => {
         
         <button
           onClick={openInCodeSandbox}
-          className="absolute bottom-4 right-4 w-8 h-8 bg-[#3e3e42] hover:bg-[#4e4e52] text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10"
+          className="absolute bottom-4 right-4 w-8 h-8 bg-elevated hover:bg-hover text-on-accent rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10"
           title="Open in CodeSandbox"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

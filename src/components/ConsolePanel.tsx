@@ -37,7 +37,7 @@ const getMessageIcon = (type: ConsoleMessage['type']) => {
       );
     default:
       return (
-        <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-3 h-3 text-muted" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
         </svg>
       );
@@ -53,7 +53,7 @@ const getMessageColor = (type: ConsoleMessage['type']) => {
     case 'info':
       return 'text-blue-400';
     default:
-      return 'text-[#cccccc]';
+      return 'text-primary';
   }
 };
 
@@ -89,15 +89,15 @@ export default function ConsolePanel({ messages, onClear }: ConsolePanelProps) {
   const warningCount = messages.filter(m => m.type === 'warn').length;
 
   return (
-    <div className="border-t border-[#3e3e42] bg-[#1e1e1e]">
+    <div className="border-t border-default bg-surface">
       {/* Console Header */}
       <div 
-        className="h-8 bg-[#2d2d30] flex items-center justify-between px-3 cursor-pointer hover:bg-[#37373d] transition-colors"
+        className="h-8 bg-elevated flex items-center justify-between px-3 cursor-pointer hover:bg-hover transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-[#cccccc] uppercase tracking-wide">Console</span>
-          <span className="text-xs text-[#858585]">
+          <span className="text-xs font-medium text-primary uppercase tracking-wide">Console</span>
+          <span className="text-xs text-muted">
             {isExpanded ? '▼' : '▶'}
           </span>
           {(errorCount > 0 || warningCount > 0) && (
@@ -122,7 +122,7 @@ export default function ConsolePanel({ messages, onClear }: ConsolePanelProps) {
               e.stopPropagation();
               onClear();
             }}
-            className="text-xs text-[#858585] hover:text-[#cccccc] px-2 py-1 hover:bg-[#3e3e42] rounded transition-colors"
+            className="text-xs text-muted hover:text-primary px-2 py-1 hover:bg-hover rounded transition-colors"
             title="Clear console"
           >
             Clear
@@ -132,9 +132,9 @@ export default function ConsolePanel({ messages, onClear }: ConsolePanelProps) {
 
       {/* Console Messages */}
       {isExpanded && (
-        <div className="h-48 overflow-auto bg-[#1e1e1e] border-t border-[#3e3e42]">
+        <div className="h-48 overflow-auto bg-surface border-t border-default">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-[#858585] text-sm">
+            <div className="flex items-center justify-center h-full text-muted text-sm">
               Console output will appear here
             </div>
           ) : (
@@ -145,7 +145,7 @@ export default function ConsolePanel({ messages, onClear }: ConsolePanelProps) {
                   className={`flex items-start gap-2 text-xs font-mono ${getMessageColor(msg.type)}`}
                 >
                   <span className="text-[10px] mt-0.5">{getMessageIcon(msg.type)}</span>
-                  <span className="text-[#858585] text-[10px] mt-0.5 min-w-[50px]">
+                  <span className="text-muted text-[10px] mt-0.5 min-w-[50px]">
                     {new Date(msg.timestamp).toLocaleTimeString()}
                   </span>
                   <span className="flex-1 break-words">

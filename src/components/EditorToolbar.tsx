@@ -62,9 +62,9 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
   };
 
   return (
-    <div className="h-8 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-3">
+    <div className="h-8 bg-elevated border-b border-default flex items-center justify-between px-3">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-[#858585] uppercase tracking-wide font-medium">Editor</span>
+        <span className="text-xs text-muted uppercase tracking-wide font-medium">Editor</span>
         {formatError && (
           <span className="text-xs text-red-400" title={formatError}>
             <svg className="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -79,7 +79,7 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
         {/* Find/Replace buttons */}
         <button
           onClick={handleFind}
-          className="px-2 py-1 text-xs rounded transition-colors bg-[#3e3e42] hover:bg-[#4e4e52] text-[#858585] hover:text-[#cccccc]"
+          className="btn btn-secondary btn-sm text-xs"
           title="Find - Ctrl/Cmd+F"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -89,7 +89,7 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
         
         <button
           onClick={handleReplace}
-          className="px-2 py-1 text-xs rounded transition-colors bg-[#3e3e42] hover:bg-[#4e4e52] text-[#858585] hover:text-[#cccccc]"
+          className="btn btn-secondary btn-sm text-xs"
           title="Replace - Ctrl/Cmd+H"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -102,8 +102,8 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
             onClick={onToggleMinimap}
             className={`px-2 py-1 text-xs rounded transition-colors ${
               minimapEnabled 
-                ? 'bg-[#007acc] text-white' 
-                : 'bg-[#3e3e42] hover:bg-[#4e4e52] text-[#858585] hover:text-[#cccccc]'
+                ? 'bg-primary text-on-accent' 
+                : 'bg-elevated hover:bg-hover text-muted hover:text-primary'
             }`}
             title={`${minimapEnabled ? 'Hide' : 'Show'} Minimap`}
           >
@@ -116,7 +116,7 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
         {onShowPackages && (
           <button
             onClick={onShowPackages}
-            className="px-2 py-1 text-xs rounded transition-colors bg-[#3e3e42] hover:bg-[#4e4e52] text-[#858585] hover:text-[#cccccc]"
+            className="btn btn-secondary btn-sm text-xs"
             title="Add Package"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -128,7 +128,7 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
         {onShowSettings && (
           <button
             onClick={onShowSettings}
-            className="px-2 py-1 text-xs rounded transition-colors bg-[#3e3e42] hover:bg-[#4e4e52] text-[#858585] hover:text-[#cccccc]"
+            className="btn btn-secondary btn-sm text-xs"
             title="Editor Settings"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -145,8 +145,8 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
             className={`
               px-2 py-1 text-xs rounded transition-colors flex items-center gap-1
               ${isFormatting
-                ? 'bg-[#3e3e42] text-[#858585] cursor-not-allowed'
-                : 'bg-[#3e3e42] hover:bg-[#4e4e52] text-[#858585] hover:text-[#cccccc]'
+                ? 'bg-elevated text-muted cursor-not-allowed'
+                : 'bg-elevated hover:bg-hover text-muted hover:text-primary'
               }
             `}
             title="Format code (Prettier) - Ctrl/Cmd+S"
@@ -164,9 +164,9 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
           </button>
         )}
         
-        <div className="w-px h-4 bg-[#3e3e42] mx-1" />
+        <div className="w-px h-4 bg-border mx-1" />
         
-        <span className="text-xs text-[#858585]">
+        <span className="text-xs text-muted">
           {fileTypeInfo.language}
         </span>
       </div>

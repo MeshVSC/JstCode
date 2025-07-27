@@ -30,33 +30,22 @@ function FileTab({ file, isActive, onSelect, onClose }: FileTabProps) {
   return (
     <div
       className={`
-        flex items-center px-3 py-2 text-xs cursor-pointer border-r border-[#3e3e42]
-        hover:bg-[#2a2d2e] transition-colors group relative
+        tab flex items-center px-3 py-2 text-xs cursor-pointer group relative
         ${isActive 
-          ? 'bg-[#1e1e1e]' 
-          : 'bg-[#2d2d30]'
+          ? 'active' 
+          : ''
         }
       `}
       onClick={onSelect}
       title={file.path}
     >
       <span className="mr-2 text-xs">{fileTypeInfo.icon}</span>
-      <span 
-        className="truncate max-w-[120px]" 
-        style={{ 
-          color: '#39ff14',
-          WebkitTextFillColor: '#39ff14'
-        }}
-      >
+      <span className="truncate max-w-[120px] text-primary">
         {file.name}
       </span>
       <button
         onClick={handleClose}
-        className={`
-          ml-2 w-4 h-4 flex items-center justify-center rounded text-xs
-          transition-all opacity-0 group-hover:opacity-100
-          hover:bg-[#3e3e42] text-[#858585] hover:text-white
-        `}
+        className="ml-2 w-4 h-4 flex items-center justify-center rounded text-xs transition-all opacity-0 group-hover:opacity-100 hover:bg-hover text-muted hover:text-primary"
         title="Close tab"
       >
         ×
@@ -80,8 +69,8 @@ export default function FileTabs({
 }: FileTabsProps) {
   if (openTabs.length === 0) {
     return (
-      <div className="h-9 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between">
-        <span className="text-xs text-[#858585] px-3">No files open</span>
+      <div className="tab-bar flex items-center justify-between">
+        <span className="text-xs text-muted px-3">No files open</span>
         
         {/* Layout Toggle Buttons - Always show */}
         <div className="flex items-center gap-1 px-3">
@@ -89,8 +78,8 @@ export default function FileTabs({
             onClick={() => onLayoutChange('editor')}
             className={`w-6 h-6 flex items-center justify-center rounded text-xs transition-colors ${
               layoutMode === 'editor' 
-                ? 'bg-[#007acc] text-white' 
-                : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#3e3e42]'
+                ? 'bg-primary text-on-accent' 
+                : 'text-muted hover:text-primary hover:bg-hover'
             }`}
             title="Editor Only"
           >
@@ -103,8 +92,8 @@ export default function FileTabs({
             onClick={() => onLayoutChange('split')}
             className={`w-6 h-6 flex items-center justify-center rounded text-xs transition-colors ${
               layoutMode === 'split' 
-                ? 'bg-[#007acc] text-white' 
-                : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#3e3e42]'
+                ? 'bg-primary text-on-accent' 
+                : 'text-muted hover:text-primary hover:bg-hover'
             }`}
             title="Split View"
           >
@@ -117,8 +106,8 @@ export default function FileTabs({
             onClick={() => onLayoutChange('preview')}
             className={`w-6 h-6 flex items-center justify-center rounded text-xs transition-colors ${
               layoutMode === 'preview' 
-                ? 'bg-[#007acc] text-white' 
-                : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#3e3e42]'
+                ? 'bg-primary text-on-accent' 
+                : 'text-muted hover:text-primary hover:bg-hover'
             }`}
             title="Preview Only"
           >
@@ -133,7 +122,7 @@ export default function FileTabs({
   }
 
   return (
-    <div className="h-9 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between">
+    <div className="tab-bar flex items-center justify-between">
       <div className="flex items-center overflow-x-auto scrollbar-thin">
         {openTabs.map(fileId => {
           const file = getFileById(fileId);
@@ -157,8 +146,8 @@ export default function FileTabs({
           onClick={() => onLayoutChange('editor')}
           className={`w-6 h-6 flex items-center justify-center rounded text-xs transition-colors ${
             layoutMode === 'editor' 
-              ? 'bg-[#007acc] text-white' 
-              : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#3e3e42]'
+              ? 'bg-primary text-on-accent' 
+              : 'text-muted hover:text-primary hover:bg-hover'
           }`}
           title="Editor Only"
         >
@@ -171,8 +160,8 @@ export default function FileTabs({
           onClick={() => onLayoutChange('split')}
           className={`w-6 h-6 flex items-center justify-center rounded text-xs transition-colors ${
             layoutMode === 'split' 
-              ? 'bg-[#007acc] text-white' 
-              : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#3e3e42]'
+              ? 'bg-primary text-on-accent' 
+              : 'text-muted hover:text-primary hover:bg-hover'
           }`}
           title="Split View"
         >
@@ -185,8 +174,8 @@ export default function FileTabs({
           onClick={() => onLayoutChange('preview')}
           className={`w-6 h-6 flex items-center justify-center rounded text-xs transition-colors ${
             layoutMode === 'preview' 
-              ? 'bg-[#007acc] text-white' 
-              : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#3e3e42]'
+              ? 'bg-primary text-on-accent' 
+              : 'text-muted hover:text-primary hover:bg-hover'
           }`}
           title="Preview Only"
         >

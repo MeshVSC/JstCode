@@ -47,7 +47,7 @@ export default function PDFExporter({ previewRef, filename }: PDFExporterProps) 
     <button
       onClick={exportToPDF}
       disabled={isExporting || !previewRef.current}
-      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+      className="btn btn-primary btn-sm flex items-center gap-2"
     >
       {isExporting ? (
         <>

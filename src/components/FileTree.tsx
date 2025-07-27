@@ -82,8 +82,8 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
       <div
         className={`
           flex items-center px-2 py-1 text-sm cursor-pointer
-          hover:bg-[#2a2d2e] transition-colors
-          ${isActive ? 'bg-[#37373d] text-white' : 'text-[#cccccc]'}
+          hover:bg-hover transition-colors
+          ${isActive ? 'bg-active text-on-accent' : 'text-primary'}
         `}
         style={{ paddingLeft: `${8 + indentation}px` }}
         onClick={handleClick}
@@ -95,7 +95,7 @@ function FileTreeNode({ node, isActive, onFileSelect, onFileDelete, level, activ
         {onFileDelete && (
           <button
             onClick={handleDelete}
-            className="ml-2 opacity-0 hover:opacity-100 text-[#858585] hover:text-red-400 transition-all"
+            className="ml-2 opacity-0 hover:opacity-100 text-muted hover:text-error transition-all"
             title="Delete file"
           >
             ×
@@ -181,7 +181,7 @@ export default function FileTree({
 
   if (files.length === 0) {
     return (
-      <div className="text-center py-8 text-[#858585] text-xs">
+      <div className="text-center py-8 text-muted text-xs">
         No files in project
       </div>
     );
@@ -198,7 +198,7 @@ export default function FileTree({
   return (
     <div className="flex flex-col h-full">
       {/* Search Input */}
-      <div className="p-2 border-b border-[#3e3e42]">
+      <div className="p-2 border-b border-default">
         <div className="relative">
           <input
             ref={searchInputRef}
@@ -206,19 +206,19 @@ export default function FileTree({
             placeholder="Search files... (Ctrl+P)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-1 text-xs bg-[#3c3c3c] border border-[#464647] rounded text-[#cccccc] placeholder-[#858585] focus:outline-none focus:border-[#007acc]"
+            className="input text-xs"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#858585] hover:text-[#cccccc] text-xs"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted hover:text-primary text-xs"
             >
               ×
             </button>
           )}
         </div>
         {searchQuery && filteredFiles.length === 0 && (
-          <div className="text-xs text-[#858585] mt-1">No files found</div>
+          <div className="text-xs text-muted mt-1">No files found</div>
         )}
       </div>
 
