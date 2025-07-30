@@ -32,6 +32,7 @@ export type SupportedFileTypes =
   | 'json'
   | 'css'
   | 'html'
+  | 'svg'
   | 'markdown'
   | 'text';
 
@@ -50,6 +51,7 @@ export const FILE_TYPE_MAP: Record<string, FileTypeInfo> = {
   '.json': { extension: '.json', language: 'json', icon: '📋', color: '#000000' },
   '.css': { extension: '.css', language: 'css', icon: '🎨', color: '#1572b6' },
   '.html': { extension: '.html', language: 'html', icon: '🌐', color: '#e34f26' },
+  '.svg': { extension: '.svg', language: 'svg', icon: '🖼️', color: '#ff9500' },
   '.md': { extension: '.md', language: 'markdown', icon: '📝', color: '#000000' },
   '.txt': { extension: '.txt', language: 'text', icon: '📄', color: '#000000' },
 };

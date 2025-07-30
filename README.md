@@ -23,7 +23,7 @@ Deploy your own instance of JstCode instantly:
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/your-username/jstcode)
 
 ### 📺 **Live Demo**
-🔗 **[Try JstCode Now →](https://jstcode.vercel.app)** *(Replace with actual deployment URL)*
+🔗 **[Try JstCode Now →](https://jst-code.vercel.app)**
 
 **Zero setup required** - visit the URL and start coding React components instantly!
 
@@ -42,7 +42,8 @@ Deploy your own instance of JstCode instantly:
 - **Auto-refresh Preview**: 300ms debounced updates on code changes
 - **Sandpack Integration**: Full React/TypeScript preview environment
 - **Multi-file Support**: Preview works with entire project structure
-- **HTML File Support**: Direct HTML file preview with iframe rendering ✅
+- **HTML/SVG File Support**: Direct HTML/SVG file preview with iframe rendering ✅
+- **Smart Code Detection**: Sandpack-inspired intelligent language detection ✅
 - **Path Resolution**: Automatic @/ alias resolution for imports ✅
 - **Console Panel**: Collapsible console with error/warning counts ✅
 - **Error Boundaries**: Graceful error handling and display
@@ -52,7 +53,7 @@ Deploy your own instance of JstCode instantly:
 - **Multiple File Upload**: Upload multiple files at once ✅
 - **Folder Upload**: Full directory structure upload with recursive parsing ✅
 - **Smart Main File Detection**: Automatically opens index/main file based on package.json ✅
-- **File Type Support**: .tsx, .ts, .jsx, .js, .json, .css, .html, .md ✅
+- **File Type Support**: .tsx, .ts, .jsx, .js, .json, .css, .html, .svg, .md ✅
 - **Project Structure**: Maintains folder hierarchy and file relationships ✅
 - **Global Drop Zone**: Drop files anywhere on the app interface ✅
 
@@ -60,7 +61,7 @@ Deploy your own instance of JstCode instantly:
 - **Prettier Integration**: ✅ *Browser-compatible imports working*
 - **Format Button**: Functional in editor toolbar ✅
 - **Format on Save**: Available in settings panel ✅
-- **Language Support**: TypeScript, JavaScript, CSS, HTML, JSON, Markdown
+- **Language Support**: TypeScript, JavaScript, CSS, HTML, SVG, JSON, Markdown
 - **Keyboard Shortcuts**: Ctrl/Cmd+S for formatting ✅
 
 #### 5. ✅ **Enhanced Editor Features** - FULLY WORKING
@@ -193,7 +194,8 @@ src/
 ├── types/
 │   └── project.ts              # TypeScript interfaces
 ├── utils/
-│   ├── formatter.ts            # Prettier integration (disabled)
+│   ├── codeDetector.ts          # Smart code detection and language analysis
+│   ├── formatter.ts            # Prettier integration with SVG support
 │   └── projectParser.ts        # File parsing (disabled)
 └── sample-component.tsx        # Example TSX file for testing
 ```
@@ -216,6 +218,32 @@ src/
 13. **📄 PDF Export**: Convert rendered components to downloadable PDF
 14. **🛡️ Error Handling**: Graceful error boundaries, user-friendly messages
 15. **📱 Responsive Design**: Works on all screen sizes with resizable panels
+16. **🧠 Smart Code Detection**: Sandpack-inspired automatic language detection and template suggestions
+
+### **🧠 Smart Detection System:**
+JstCode now features an intelligent code analysis system inspired by CodeSandbox's Sandpack:
+
+**Features:**
+- **Early Detection**: High-confidence pattern matching for SVG, HTML, and other languages
+- **Language Analysis**: Multi-factor scoring using file extensions, imports, keywords, and patterns  
+- **Template Suggestions**: Intelligent template selection based on detected language and framework
+- **Framework Detection**: Automatic detection of React, Vue, Angular, Next.js, and styling frameworks
+- **Confidence Scoring**: Reliable detection with fallback strategies for edge cases
+
+**Supported Languages:**
+- TypeScript React (.tsx) - Advanced component detection
+- JavaScript React (.jsx) - React pattern recognition  
+- TypeScript (.ts) - Interface and type detection
+- JavaScript (.js) - Modern ES6+ pattern detection
+- HTML (.html) - Full HTML5 and multi-page support
+- SVG (.svg) - Complete SVG element and attribute detection
+- CSS (.css) - Selector and property pattern matching
+
+**Smart Features:**
+- **SVG Intelligence**: Detects SVG elements, attributes (viewBox, xmlns), and styling
+- **React Detection**: Identifies hooks, JSX patterns, component exports, and TypeScript React
+- **Framework Recognition**: Next.js imports, Vue templates, Angular decorators, Tailwind classes
+- **Project Type Analysis**: Single-file, component, full-app, or library classification
 
 ### **Enhanced User Workflow:**
 1. ✅ **Start** by dragging any project folder directly onto the app interface  
@@ -358,6 +386,11 @@ JstCode includes a camera icon in the vertical menu bar for enhanced AI developm
 - All core features fully working and optimized for performance
 
 **Latest Updates (This Session):**
+- ✅ **Smart Code Detection**: Sandpack-inspired intelligent language and template detection
+- ✅ **Enhanced SVG Support**: Full SVG code detection, formatting, and preview 
+- ✅ **Early Detection System**: High-confidence pattern matching for accurate language detection
+- ✅ **Template Priority System**: Intelligent template suggestion based on code analysis
+- ✅ **Comprehensive Formatter**: SVG files now format properly using HTML parser
 - ✅ **Smart Project Loading**: Auto-detects main file from package.json configuration
 - ✅ **HTML File Support**: Direct HTML preview with iframe rendering and script detection
 - ✅ **Path Alias Resolution**: Automatic @/ import resolution for complex projects  
@@ -365,10 +398,6 @@ JstCode includes a camera icon in the vertical menu bar for enhanced AI developm
 - ✅ **Professional Icons**: Replaced all emoji icons with clean SVG graphics
 - ✅ **Improved Error Handling**: Better preview fallbacks and error recovery
 - ✅ **Console Optimization**: Enhanced console message parsing and display
-- ✅ **Fixed Preview Flickering**: Resolved red/black screen alternation issues
-- ✅ **Enhanced Dependencies**: Added esbuild-wasm, @babel/standalone for custom bundling
-- ✅ **Routing Improvements**: Automatic BrowserRouter to HashRouter conversion
-- ⚠️ **Multi-page HTML Navigation**: Partial implementation (see Known Issues)
 
 ## 🚨 **Current Known Issues - Multi-page HTML Navigation**
 

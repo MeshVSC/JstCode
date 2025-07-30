@@ -118,15 +118,55 @@ const LANGUAGE_PATTERNS: Record<string, DetectionPattern> = {
       /<body[\s>]/i,
       /<div[\s>]/i,
       /<p[\s>]/i,
-      /<script[\s>]/i
+      /<script[\s>]/i,
+      /<svg[\s>]/i,  // SVG detection
+      /<circle[\s>]/i,
+      /<path[\s>]/i,
+      /<rect[\s>]/i,
+      /<g[\s>]/i,
+      /<polygon[\s>]/i,
+      /<line[\s>]/i,
+      /<text[\s>]/i
     ],
     keywords: [
       /<meta\s+/,
       /<link\s+/,
-      /<title>/
+      /<title>/,
+      /viewBox=/i,
+      /xmlns=/i,
+      /stroke=/i,
+      /fill=/i
     ],
-    fileExtensions: ['.html', '.htm'],
-    confidence: 0.9
+    fileExtensions: ['.html', '.htm', '.svg'],
+    confidence: 0.95  // Higher confidence for HTML/SVG
+  },
+
+  'svg': {
+    name: 'SVG',
+    patterns: [
+      /<svg[\s>]/i,
+      /<circle[\s>]/i,
+      /<path[\s>]/i,
+      /<rect[\s>]/i,
+      /<g[\s>]/i,
+      /<polygon[\s>]/i,
+      /<line[\s>]/i,
+      /<text[\s>]/i,
+      /<ellipse[\s>]/i,
+      /<defs[\s>]/i
+    ],
+    keywords: [
+      /viewBox=/i,
+      /xmlns=["']http:\/\/www\.w3\.org\/2000\/svg["']/i,
+      /stroke=/i,
+      /fill=/i,
+      /stroke-width=/i,
+      /stroke-linecap=/i,
+      /opacity=/i,
+      /transform=/i
+    ],
+    fileExtensions: ['.svg'],
+    confidence: 0.98  // Very high confidence for SVG
   },
 
   'css': {
@@ -246,18 +286,35 @@ export function detectProjectType(code: string, filename?: string): 'single-file
   return 'single-file';
 }
 
-// Main analysis function
+// Main analysis function (Enhanced Sandpack-inspired)
 export function analyzeCode(code: string, filename?: string): CodeAnalysis {
   const features: string[] = [];
   let bestLanguageMatch = { name: 'javascript', confidence: 0.1 };
   let bestFrameworkMatch: { name: string; confidence: number } | null = null;
 
-  // Detect language
-  for (const [key, pattern] of Object.entries(LANGUAGE_PATTERNS)) {
-    let confidence = 0;
-    let matches = 0;
+  // Early detection for high-confidence patterns (Sandpack approach)
+  const earlyDetectors = [
+    { pattern: /<svg[\s>]/i, language: 'svg', confidence: 0.95 },
+    { pattern: /<!DOCTYPE\s+html>/i, language: 'html', confidence: 0.9 },
+    { pattern: /<html[\s>]/i, language: 'html', confidence: 0.85 },
+    { pattern: /viewBox=.*xmlns.*svg/i, language: 'svg', confidence: 0.9 }
+  ];
 
-    // Check file extension first
+  for (const detector of earlyDetectors) {
+    if (detector.pattern.test(code)) {
+      bestLanguageMatch = { name: detector.language, confidence: detector.confidence };
+      break; // Use first high-confidence match
+    }
+  }
+
+  // If no early detection, proceed with full analysis
+  if (bestLanguageMatch.confidence < 0.8) {
+    // Detect language
+    for (const [key, pattern] of Object.entries(LANGUAGE_PATTERNS)) {
+      let confidence = 0;
+      let matches = 0;
+
+      // Check file extension first
     if (filename && pattern.fileExtensions) {
       const ext = '.' + filename.split('.').pop()?.toLowerCase();
       if (pattern.fileExtensions.includes(ext)) {
@@ -295,10 +352,11 @@ export function analyzeCode(code: string, filename?: string): CodeAnalysis {
     // Apply base confidence
     confidence *= pattern.confidence;
 
-    if (confidence > bestLanguageMatch.confidence) {
-      bestLanguageMatch = { name: key, confidence };
+      if (confidence > bestLanguageMatch.confidence) {
+        bestLanguageMatch = { name: key, confidence };
+      }
     }
-  }
+  } // Close the early detection conditional
 
   // Detect framework
   for (const [key, pattern] of Object.entries(FRAMEWORK_PATTERNS)) {
@@ -378,38 +436,75 @@ export function analyzeCode(code: string, filename?: string): CodeAnalysis {
   };
 }
 
-// Template suggestion logic
+// Template priority system (Sandpack-inspired)
+const TEMPLATE_PRIORITIES: Record<string, { template: string; priority: number }[]> = {
+  'svg': [
+    { template: 'html-page', priority: 10 },
+    { template: 'vanilla', priority: 8 }
+  ],
+  'html': [
+    { template: 'html-page', priority: 10 },
+    { template: 'vanilla', priority: 8 }
+  ],
+  'typescript-react': [
+    { template: 'react-ts', priority: 10 },
+    { template: 'nextjs-typescript', priority: 8 },
+    { template: 'react-typescript-tailwind', priority: 6 }
+  ],
+  'javascript-react': [
+    { template: 'react', priority: 10 },
+    { template: 'nextjs-javascript', priority: 8 }
+  ],
+  'vue': [
+    { template: 'vue', priority: 10 },
+    { template: 'vue-ts', priority: 8 }
+  ],
+  'angular': [
+    { template: 'angular', priority: 10 }
+  ],
+  'typescript': [
+    { template: 'vanilla-ts', priority: 8 },
+    { template: 'node', priority: 6 }
+  ],
+  'javascript': [
+    { template: 'vanilla', priority: 8 },
+    { template: 'node', priority: 6 }
+  ],
+  'css': [
+    { template: 'vanilla', priority: 6 }
+  ]
+};
+
+// Enhanced template suggestion logic (Sandpack-inspired)
 function getSuggestedTemplate(language: string, framework?: string, projectType?: string): string {
-  // React templates
-  if (language === 'typescript-react') {
-    if (framework === 'next.js') return 'nextjs-typescript';
-    if (framework === 'tailwind') return 'react-typescript-tailwind';
-    return 'react-typescript-component';
+  // Get priority templates for detected language
+  const languageTemplates = TEMPLATE_PRIORITIES[language] || [];
+  
+  // Framework-specific overrides
+  if (framework === 'next.js' && (language === 'typescript-react' || language === 'javascript-react')) {
+    return language === 'typescript-react' ? 'nextjs-typescript' : 'nextjs-javascript';
   }
   
-  if (language === 'javascript-react') {
-    if (framework === 'next.js') return 'nextjs-javascript';
-    return 'react-javascript-component';
-  }
-
-  // Vue templates
   if (framework === 'vue') {
-    return projectType === 'component' ? 'vue-component' : 'vue-app';
+    return language === 'typescript' ? 'vue-ts' : 'vue';
   }
-
-  // Angular templates
+  
   if (framework === 'angular') {
-    return projectType === 'component' ? 'angular-component' : 'angular-app';
+    return 'angular';
+  }
+  
+  // Return highest priority template for language
+  if (languageTemplates.length > 0) {
+    return languageTemplates[0].template;
   }
 
-  // Basic templates
-  if (language === 'typescript') return 'typescript-function';
-  if (language === 'javascript') return 'javascript-function';
-  if (language === 'html') return 'html-page';
-  if (language === 'css') return 'css-stylesheet';
-
+  // Smart fallbacks based on content type
+  if (language === 'html' || language === 'svg') {
+    return 'vanilla'; // Use vanilla template for HTML/SVG preview
+  }
+  
   // Default fallback
-  return 'blank-javascript';
+  return 'vanilla';
 }
 
 // Quick detection for file uploads
@@ -424,6 +519,7 @@ export function quickDetectLanguage(filename: string, content?: string): string 
     'js': 'javascript',
     'html': 'html',
     'htm': 'html',
+    'svg': 'svg',  // Add SVG extension mapping
     'css': 'css',
     'scss': 'scss',
     'sass': 'sass',

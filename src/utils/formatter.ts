@@ -29,6 +29,7 @@ function getParserForLanguage(language: SupportedFileTypes): string {
     case 'css':
       return 'css';
     case 'html':
+    case 'svg':  // Treat SVG as HTML
       return 'html';
     case 'markdown':
       return 'markdown';
@@ -67,6 +68,7 @@ async function loadPrettierWithPlugins(language: SupportedFileTypes) {
       plugins = [parserPostcss.default];
       break;
     case 'html':
+    case 'svg':  // Use HTML parser for SVG
       const parserHtml = await import('prettier/plugins/html');
       plugins = [parserHtml.default];
       break;
@@ -117,5 +119,5 @@ export async function formatCode(
 }
 
 export function canFormatLanguage(language: SupportedFileTypes): boolean {
-  return ['typescript', 'javascript', 'json', 'css', 'html', 'markdown'].includes(language);
+  return ['typescript', 'javascript', 'json', 'css', 'html', 'svg', 'markdown'].includes(language);
 }

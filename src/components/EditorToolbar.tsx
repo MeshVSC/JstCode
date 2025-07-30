@@ -2,6 +2,7 @@
 
 import { FileNode, getFileTypeInfo } from '@/types/project';
 import { useFormatter } from '@/hooks/useFormatter';
+import { analyzeCode } from '@/utils/codeDetector';
 
 interface EditorToolbarProps {
   activeFile: FileNode | null;
@@ -19,14 +20,19 @@ export default function EditorToolbar({ activeFile, onCodeChange, minimapEnabled
     return null;
   }
 
+  // Use smart detection for language instead of just file extension
+  const codeAnalysis = analyzeCode(activeFile.content || '', activeFile.name);
+  const detectedLanguage = codeAnalysis.language as any; // Type assertion for now
+  
   const fileTypeInfo = getFileTypeInfo(activeFile.name);
-  const canFormatFile = canFormat(fileTypeInfo.language);
+  const languageToUse = detectedLanguage || fileTypeInfo.language;
+  const canFormatFile = canFormat(languageToUse);
 
   const handleFormat = async () => {
     if (!activeFile || !activeFile.content) return;
     
     try {
-      const formattedCode = await format(activeFile.content, fileTypeInfo.language);
+      const formattedCode = await format(activeFile.content, languageToUse);
       onCodeChange(formattedCode);
     } catch (error) {
       console.error('Format failed:', error);

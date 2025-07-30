@@ -7,6 +7,7 @@ import ConsolePanel from './ConsolePanel';
 import CustomPreview from './CustomPreview';
 import { useConsoleCapture } from '@/hooks/useConsoleCapture';
 import { useTheme } from '@/contexts/ThemeContext';
+import { analyzeCode } from '@/utils/codeDetector';
 
 interface LivePreviewProps {
   code: string;
@@ -19,8 +20,25 @@ export default function LivePreview({ code, filename, allFiles }: LivePreviewPro
   const { currentTheme } = useTheme();
   const [zoomLevel, setZoomLevel] = useState(100);
   
+  // Use smart detection system first
+  const codeAnalysis = analyzeCode(code, filename);
+  const isHtmlContent = codeAnalysis.language === 'html' || codeAnalysis.language === 'svg';
+  
   // Determine Sandpack theme based on app theme
   const sandpackTheme = currentTheme === 'clean-light' ? 'light' : 'dark';
+
+  // Zoom control functions
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 25, 200));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 25, 50));
+  };
+
+  const handleZoomReset = () => {
+    setZoomLevel(100);
+  };
 
   // Listen for console messages from Sandpack
   useEffect(() => {
@@ -311,17 +329,21 @@ window.addEventListener('unhandledrejection', (e) => {
 ` + files['/src/main.tsx'].code;
   }
 
-  const template = (isTypeScriptFile(filename) || getFileExtension(filename) === 'ts') ? 'react-ts' : 'react';
+  // Use smart template detection
+  const template = codeAnalysis.suggestedTemplate || 
+    ((isTypeScriptFile(filename) || getFileExtension(filename) === 'ts') ? 'react-ts' : 'react');
   
-  // Debug: log actual code being rendered
+  // Debug: log detection results and code
+  console.log('Code Analysis:', codeAnalysis);
+  console.log('Suggested Template:', template);
   console.log('Actual code being rendered:', code);
-
+  
   // Check if this is an HTML file or project has multiple HTML files
   const hasMultipleHtmlFiles = Object.keys(allFiles || {}).filter(path => 
     path.endsWith('.html') || path.endsWith('.htm')
   ).length > 1;
 
-  if (isHtmlFile(filename) || hasMultipleHtmlFiles) {
+  if (isHtmlContent || isHtmlFile(filename) || hasMultipleHtmlFiles) {
     // For multi-page HTML projects, create a mini server-like experience
     const createMultiPageHtml = () => {
       const htmlFiles = Object.keys(allFiles || {}).filter(path => 
@@ -430,8 +452,11 @@ window.addEventListener('unhandledrejection', (e) => {
     );
   }
 
-  // Check if this is a React file that can be previewed
-  if (!isReactFile(filename)) {
+  // Check if this can be previewed using smart detection
+  const isReactContent = codeAnalysis.language === 'typescript-react' || codeAnalysis.language === 'javascript-react';
+  const isPreviewableContent = isReactContent || isHtmlContent;
+  
+  if (!isPreviewableContent && !isReactFile(filename)) {
     // Special message for .ts files that don't contain React code
     const ext = getFileExtension(filename);
     const isPlainTypeScript = ext === 'ts' && !code.includes('React') && !code.includes('<');
@@ -458,8 +483,8 @@ window.addEventListener('unhandledrejection', (e) => {
               </>
             ) : (
               <>
-                <p>Live preview is available for React files (.tsx, .jsx) and HTML files (.html, .htm)</p>
-                <p className="text-sm mt-2">Current file: {filename}</p>
+                <p>Live preview is available for React files (.tsx, .jsx), HTML files (.html, .htm), and SVG files (.svg)</p>
+                <p className="text-sm mt-2">Current file: {filename} | Detected: {codeAnalysis.language}</p>
               </>
             )}
           </div>
@@ -512,18 +537,6 @@ window.addEventListener('unhandledrejection', (e) => {
     
     const parameters = btoa(JSON.stringify(sandboxConfig));
     window.open(`https://codesandbox.io/api/v1/sandboxes/define?parameters=${parameters}`, '_blank');
-  };
-
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 25, 200));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 25, 50));
-  };
-
-  const handleZoomReset = () => {
-    setZoomLevel(100);
   };
 
   return (
